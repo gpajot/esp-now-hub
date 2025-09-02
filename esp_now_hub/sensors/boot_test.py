@@ -1,14 +1,6 @@
 import json
 import time
 
-import network
-import ubinascii
-
-print(
-    "MAC address:",
-    ubinascii.b2a_hex(network.WLAN(network.STA_IF).config("mac"), ":"),
-)
-
 # Load config.
 with open("config.json", "r") as f:
     config = json.loads(f.read())

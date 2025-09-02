@@ -44,6 +44,7 @@ class MQTTClient:
     def _connect(self, clean_session=True):
         self._client.connect(clean_session)
         self._client.publish(self._status_topic, b"online", retain=True)
+        print("connected to MQTT")
 
     def _reconnect(self, attempts):
         i = 0

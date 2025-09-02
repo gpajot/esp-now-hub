@@ -6,4 +6,5 @@ ESP-NOW proxy to gather data collected by sensors and send them to MQTT.
 
 ## Setup
 `poetry install --with dev`
+
 Copy [umqtt.simple](https://github.com/micropython/micropython-lib/blob/master/micropython/umqtt.simple/umqtt/simple.py) into `esp_now_hub/hub/umqtt/simple.py`.
