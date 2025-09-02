@@ -1,5 +1,6 @@
 import time
 
+import machine
 import network
 
 STATUSES = {
@@ -29,11 +30,13 @@ class WLan:
             }:
                 time.sleep(0.1)
             if self._wlan.status() == network.STAT_GOT_IP:
+                print("connected to wifi")
                 return self
             print(
-                f"could not connect to wifi! status: {STATUSES.get(self._wlan.status())}, wait for 5s"
+                f"could not connect to wifi! status: {STATUSES.get(self._wlan.status())}, wait for 30s"
             )
-            time.sleep(5)
+            self._disconnect()
+            machine.lightsleep(30000)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._disconnect()
