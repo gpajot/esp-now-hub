@@ -25,7 +25,7 @@ pytest = "==8.3.5"
 ruff = "==0.11.4"
 mypy = "==1.15.0"
 pre-commit = "==4.2.0"
-micropython-esp32-esp32_generic_s2-stubs = "==1.25.0.post4"
+micropython-esp32-esp32_generic_s2-stubs = "==1.26.0.post1"
 
 [build-system]
 requires = ["poetry-core"]
