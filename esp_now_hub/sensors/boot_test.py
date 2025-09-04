@@ -1,13 +1,10 @@
-import json
 import time
 
-# Load config.
-with open("config.json", "r") as f:
-    config = json.loads(f.read())
+from config import CONFIG
 
 # Create sensors.
 data_getters = {}
-for cfg in config["sensors"]:
+for cfg in CONFIG["sensors"]:
     sensor_id = cfg.pop("id")
     sensor_type = cfg.pop("type")
     if sensor_type == "MS5540C":
@@ -34,4 +31,4 @@ for cfg in config["sensors"]:
 while True:
     for sensor_id, getter in data_getters:
         print(sensor_id, getter())
-    time.sleep(config["interval"])
+    time.sleep(CONFIG["interval"])
