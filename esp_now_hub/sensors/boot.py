@@ -5,18 +5,13 @@ import espnow
 import machine
 import network
 import ubinascii
+from config import CONFIG
 
 initialize = machine.reset_cause() == machine.PWRON_RESET
 
-# Load config.
-with open("config.json", "r") as f:
-    config = json.loads(f.read())
-deepsleep = config.get("deepsleep")
-
-
 # Create sensors.
 data_getters = {}
-for cfg in config["sensors"]:
+for cfg in CONFIG["sensors"]:
     sensor_id = cfg.pop("id")
     sensor_type = cfg.pop("type")
     if sensor_type == "MS5540C":
@@ -42,16 +37,17 @@ for cfg in config["sensors"]:
 # Send data.
 wlan = network.WLAN(network.WLAN.IF_STA)
 wlan.active(True)
-wlan.config(channel=config["wifi_channel"])
+wlan.config(channel=CONFIG["wifi_channel"])
 try:
     e = espnow.ESPNow()
     e.active(True)
-    e.set_pmk(config["primary_master_key"])
+    if CONFIG.get("primary_master_key"):
+        e.set_pmk(CONFIG["primary_master_key"])
     try:
         hub_address = ubinascii.unhexlify(
-            config["hub_address"].replace(":", "").encode("utf-8")
+            CONFIG["hub_address"].replace(":", "").encode("utf-8")
         )
-        e.add_peer(hub_address, lmk=config["local_master_key"])
+        e.add_peer(hub_address, lmk=CONFIG.get("local_master_key"))
         while True:
             e.send(
                 hub_address,
@@ -59,14 +55,14 @@ try:
                     {sensor_id: getter() for sensor_id, getter in data_getters.items()}
                 ),
             )
-            if deepsleep:
+            if CONFIG.get("deepsleep"):
                 break
             else:
-                time.sleep(config["interval"])
+                time.sleep(CONFIG["interval"])
     finally:
         e.active(False)
 finally:
     wlan.active(False)
 
-if deepsleep:
-    machine.deepsleep(config["interval"] * 1000)
+if CONFIG.get("deepsleep"):
+    machine.deepsleep(CONFIG["interval"] * 1000)

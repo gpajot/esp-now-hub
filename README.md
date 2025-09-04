@@ -5,6 +5,99 @@
 ESP-NOW proxy to gather data collected by sensors and send them to MQTT.
 
 ## Setup
-`poetry install --with dev`
+1. Run `poetry install --with dev`
+2. Copy [umqtt.simple](https://github.com/micropython/micropython-lib/blob/master/micropython/umqtt.simple/umqtt/simple.py) into `esp_now_hub/hub/umqtt/simple.py`.
 
-Copy [umqtt.simple](https://github.com/micropython/micropython-lib/blob/master/micropython/umqtt.simple/umqtt/simple.py) into `esp_now_hub/hub/umqtt/simple.py`.
+## Flash a device
+A device is either a sensor or the hub. A test mode is available to display real time sensor data in the REPL (run `rshell repl` after setting up).
+
+1. Set up `config.py` (see below for structure) in root project folder.
+2. Set up environmental variables `ESPTOOL_PORT` and `RSHELL_PORT`.
+3. Run `./flash.bash hub|sensor|test PATH_TO_MICROPYTHON_BINARY`
+
+> [!TIP]
+> If using ESPNow encryption, generate keys with `openssl rand -hex 8`.
+> Otherwise remove the properties in configurations.
+
+### Hub config
+```python
+CONFIG = {
+  "topic_prefix": "esp-now-hub",
+  "primary_master_key": "...",
+  "wifi": {
+    "ssid":  "...",
+    "password": "..."
+  },
+  "mqtt": {
+    "server": "192.168.1.X",
+    "port": 1883,
+    "user": "...",
+    "password": "...",
+    "keepalive": 60
+  },
+  "devices": [
+    {
+      "address": "00:00:00:00:00:00",
+      "local_master_key": "..."
+    },
+    ...
+  ]
+}
+```
+> [!TIP]
+> Remove MQTT `user` and `password` if not using them.
+
+### Sensor config
+```python
+CONFIG = {
+  "deepsleep": True,
+  "interval": 300,
+  "wifi_channel": 6,
+  "hub_address": "00:00:00:00:00:00",
+  "primary_master_key": "...",
+  "local_master_key": "...",
+  "sensors": [
+    {
+      "id": "...",
+      "type": "MS5540C",
+      "sclk": 36,
+      "din": 35,
+      "dout": 37,
+      "mclk": 38,
+    }
+  ]
+}
+```
+> [!TIP]
+> Check test config to view sensor types and arguments to supply.
+
+### Test config
+```python
+CONFIG = {
+  "interval": 2,
+  "sensors": [
+    {
+      "id": "...",
+      "type": "MS5540C",
+      "sclk": 36,
+      "din": 35,
+      "dout": 37,
+      "mclk": 38
+    },
+    {
+      "id": "...",
+      "type": "BMP280",
+      "scl": 9,
+      "sda": 8
+    },
+    {
+      "id": "...",
+      "type": "AHT20",
+      "scl": 9,
+      "sda": 8
+    }
+  ]
+}
+```
+
+
