@@ -93,7 +93,7 @@ _ICONS = {
 }
 
 
-def send(client, topic_prefix, device_id, data):
+def send(client, topic_prefix, device_id, device_name, data):
     status_topic = get_status_topic(topic_prefix, device_id)
     state_topic = get_state_topic(topic_prefix, device_id)
     state = {}
@@ -110,7 +110,7 @@ def send(client, topic_prefix, device_id, data):
                             "identifiers": [f"{topic_prefix}-{device_id}"],
                             "manufacturer": "Wemos",
                             "model": "ESP32 S2 Mini",
-                            "name": device_id,
+                            "name": device_name,
                         },
                         "availability": [
                             {"topic": status_topic},

@@ -206,5 +206,7 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-setup.bash
+/setup.bash
 /esp_now_hub/hub/umqtt/
+/flash/
+/config.py

@@ -3,31 +3,52 @@ import time
 
 import machine
 
-sleep_time = 1250 + 2300 * (1 << 1) + 2300 * (1 << 1) + 575 + 2300 * (1 << 1) + 575
-
 
 class BMP280:
     """Atmospheric pressure and temperature sensor.
     See https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bmp280-ds001.pdf
     """
 
-    ADDRESS = 0x77
+    CONFIG_REGISTER = 0xF5  # 3 bits: standby duration, 3 bits: IIR filter time, 1 bit: nothing, 1 bit: spi
+    CONFIG_VALUE = b"\x00"  # 000 000 0 0
     CTRL_MEASURE_REGISTER = (
         0xF4  # 3 bits: temp oversampling, 3 bits: press oversampling, 2 bits: mode
     )
-    CTRL_MEASURE_VALUE = b"\x25"  # 001 001 01
-    CONFIG_REGISTER = 0xF5  # 3 bits: standby duration, 3 bits: IIR filter time, 1 bit: nothing, 1 bit: spi
-    CONFIG_VALUE = b"\x00"  # 000 000 0 0
+    CTRL_MEASURE_VALUES = {
+        "ultra-low-power": b"\x25",  # 001 001 01
+        "low-power": b"\x29",  # 001 010 01
+        "standard-resolution": b"\x2d",  # 001 011 01
+        "high-resolution": b"\x31",  # 001 100 01
+        "ultra-high-resolution": b"\x55",  # 010 101 01
+    }
     MEASURE_REGISTER = 0xF7
-    MEASURE_DURATION = 0.0064  # At 1x oversampling.
+    MEASURE_DURATIONS = {
+        "ultra-low-power": 0.0064,
+        "low-power": 0.0087,
+        "standard-resolution": 0.0133,
+        "high-resolution": 0.0225,
+        "ultra-high-resolution": 0.0432,
+    }
     CALIBRATION_REGISTER = 0x88  # 24 bytes.
-    CALIBRATION_STRUCT = "<HhhHhhhhhhhh"  # dig_T1 -> dig_T3, dig_P1 -> dig_P9
+    CALIBRATION_STRUCT = "<H2hH8h"  # dig_T1 -> dig_T3, dig_P1 -> dig_P9
     CALIBRATION_CACHE = "bmp280-calibration.txt"
 
-    def __init__(self, scl, sda, initialize=True, calibration_cache_prefix=None):
+    def __init__(
+        self,
+        scl,
+        sda,
+        address=0x77,
+        mode="ultra-low-power",
+        initialize=True,
+        calibration_cache_prefix=None,
+    ):
         self._i2c = machine.SoftI2C(scl=machine.Pin(scl), sda=machine.Pin(sda))
+        self._address = address
+        self._mode = mode
         if initialize:
-            self._i2c.writeto_mem(self.ADDRESS, self.CONFIG_REGISTER, self.CONFIG_VALUE)
+            self._i2c.writeto_mem(
+                self._address, self.CONFIG_REGISTER, self.CONFIG_VALUE
+            )
         self._calibration_coefficients = self._get_calibration_coefficients(
             calibration_cache_prefix
         )
@@ -44,7 +65,7 @@ class BMP280:
         except Exception:
             pass
         data = self._i2c.readfrom_mem(
-            self.ADDRESS,
+            self._address,
             self.CALIBRATION_REGISTER,
             struct.calcsize(self.CALIBRATION_STRUCT),
         )
@@ -57,14 +78,14 @@ class BMP280:
         """Return pressure (bar), temperature (Celsius)."""
         # Set forced mode to trigger measure.
         self._i2c.writeto_mem(
-            self.ADDRESS,
+            self._address,
             self.CTRL_MEASURE_REGISTER,
-            self.CTRL_MEASURE_VALUE,
+            self.CTRL_MEASURE_VALUES[self._mode],
         )
         # Wait for measurements to complete.
-        time.sleep(self.MEASURE_DURATION)
+        time.sleep(self.MEASURE_DURATIONS[self._mode])
         data = self._i2c.readfrom_mem(
-            self.ADDRESS,
+            self._address,
             self.MEASURE_REGISTER,
             6,
         )

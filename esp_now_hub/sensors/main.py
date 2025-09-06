@@ -1,0 +1,53 @@
+import json
+import time
+
+import espnow
+import machine
+import network
+import ubinascii
+from config import CONFIG
+from setup import setup_sensors
+
+
+def run():
+    data_getters = setup_sensors(
+        CONFIG,
+        initialize=machine.reset_cause() == machine.PWRON_RESET,
+    )
+
+    wlan = network.WLAN(network.WLAN.IF_STA)
+    wlan.active(True)
+    wlan.config(channel=CONFIG["wifi_channel"])
+    try:
+        e = espnow.ESPNow()
+        e.active(True)
+        if CONFIG.get("primary_master_key"):
+            e.set_pmk(CONFIG["primary_master_key"])
+        try:
+            hub_address = ubinascii.unhexlify(
+                CONFIG["hub_address"].replace(":", "").encode("utf-8")
+            )
+            e.add_peer(hub_address, lmk=CONFIG.get("local_master_key"))
+            while True:
+                e.send(
+                    hub_address,
+                    json.dumps(
+                        {
+                            sensor_id: getter()
+                            for sensor_id, getter in data_getters.items()
+                        }
+                    ),
+                )
+                if CONFIG.get("deepsleep"):
+                    break
+                else:
+                    time.sleep(CONFIG["interval"])
+        finally:
+            e.active(False)
+    finally:
+        wlan.active(False)
+
+    machine.deepsleep(CONFIG["interval"] * 1000)
+
+
+run()
