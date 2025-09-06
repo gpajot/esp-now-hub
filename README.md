@@ -9,13 +9,14 @@ ESP-NOW proxy to gather data collected by sensors and send them to MQTT.
 2. Copy [umqtt.simple](https://github.com/micropython/micropython-lib/blob/master/micropython/umqtt.simple/umqtt/simple.py) into `esp_now_hub/hub/umqtt/simple.py`.
 
 ## Flash a device
-A device is either a sensor or the hub. A test mode is available to display real time sensor data in the REPL (run `rshell repl` after setting up).
+A device is either a sensor or the hub. A test mode is available to display real time sensor data.
 
 1. Set up `config.py` (see below for structure) in root project folder.
-2. Set up environmental variables `ESPTOOL_PORT` and `RSHELL_PORT`.
-3. Run `./flash.bash hub|sensor|test PATH_TO_MICROPYTHON_BINARY`
+2.
+   - Run `./scripts/flash.bash hub|sensor|test PATH_TO_MICROPYTHON_FIRMWARE_BINARY` to flash the device
+   - Run `./scripts/update_config.bash` to simply update the config
 
-> [!TIP]
+> [!NOTE]
 > If using ESPNow encryption, generate keys with `openssl rand -hex 8`.
 > Otherwise remove the properties in configurations.
 
@@ -26,25 +27,25 @@ CONFIG = {
   "primary_master_key": "...",
   "wifi": {
     "ssid":  "...",
-    "password": "..."
+    "password": "...",
   },
   "mqtt": {
     "server": "192.168.1.X",
     "port": 1883,
     "user": "...",
     "password": "...",
-    "keepalive": 60
+    "keepalive": 60,
   },
   "devices": [
     {
       "address": "00:00:00:00:00:00",
-      "local_master_key": "..."
+      "local_master_key": "...",
+      "name": "Device",
     },
-    ...
-  ]
+  ],
 }
 ```
-> [!TIP]
+> [!NOTE]
 > Remove MQTT `user` and `password` if not using them.
 
 ### Sensor config
@@ -59,16 +60,11 @@ CONFIG = {
   "sensors": [
     {
       "id": "...",
-      "type": "MS5540C",
-      "sclk": 36,
-      "din": 35,
-      "dout": 37,
-      "mclk": 38,
-    }
-  ]
+    },
+  ],
 }
 ```
-> [!TIP]
+> [!NOTE]
 > Check test config to view sensor types and arguments to supply.
 
 ### Test config
@@ -82,21 +78,33 @@ CONFIG = {
       "sclk": 36,
       "din": 35,
       "dout": 37,
-      "mclk": 38
+      "mclk": 38,
     },
     {
       "id": "...",
       "type": "BMP280",
       "scl": 9,
-      "sda": 8
+      "sda": 8,
+      "address": 0x77,
+      "mode": "ultra-low-power",
     },
     {
       "id": "...",
       "type": "AHT20",
       "scl": 9,
-      "sda": 8
-    }
-  ]
+      "sda": 8,
+      "address": 0x38,
+    },
+    {
+      "id": "...",
+      "type": "MS5803",
+      "scl": 9,
+      "sda": 8,
+      "address": 0x77,
+      "pressure_resolution": 256,
+      "temperature_resolution": 256,
+    },
+  ],
 }
 ```
 

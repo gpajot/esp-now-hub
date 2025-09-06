@@ -17,9 +17,9 @@ requires-poetry = ">=2"
 [tool.poetry.group.dev]
 optional = true
 [tool.poetry.group.dev.dependencies]
+mpremote = "==1.25.0"
 esptool = "==5.0.2"
 mpy-cross = "==1.26.0.post2"
-rshell = "==0.0.36"
 
 [tool.poetry.group.test.dependencies]
 pytest = "==8.4.1"
