@@ -208,5 +208,5 @@ __marimo__/
 
 /setup.bash
 /esp_now_hub/hub/umqtt/
-/flash/
+/data/
 /config.py

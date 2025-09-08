@@ -23,6 +23,7 @@ class WLan:
         while True:
             self._disconnect()
             self._wlan.active(True)
+            self._wlan.config(pm=self._wlan.PM_NONE)
             self._wlan.connect(self._ssid, self._password)
             while self._wlan.status() in {
                 network.STAT_CONNECTING,
