@@ -6,7 +6,7 @@ class Sensor(TypedDict):
     type: str
 
 
-class CONFIG(TypedDict):
+class Config(TypedDict):
     deepsleep: NotRequired[bool]
     interval: float
     wifi_channel: int
@@ -14,3 +14,6 @@ class CONFIG(TypedDict):
     primary_master_key: NotRequired[str]
     local_master_key: NotRequired[str]
     sensors: list[Sensor]
+
+
+CONFIG: Config

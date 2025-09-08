@@ -22,4 +22,12 @@ def setup_sensors(config, initialize):
             from aht20 import AHT20
 
             data_getters[sensor_id] = AHT20(initialize=initialize, **cfg).get_measure
+        elif sensor_type == "MS5803":
+            from ms5803 import MS5803
+
+            data_getters[sensor_id] = MS5803(
+                initialize=initialize,
+                calibration_cache_prefix=sensor_id,
+                **cfg
+            ).get_measure  # fmt: skip
     return data_getters

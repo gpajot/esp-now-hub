@@ -20,6 +20,7 @@ def run():
     wlan.config(channel=CONFIG["wifi_channel"])
     try:
         e = espnow.ESPNow()
+        e.active(False)
         e.active(True)
         if CONFIG.get("primary_master_key"):
             e.set_pmk(CONFIG["primary_master_key"])
@@ -37,6 +38,7 @@ def run():
                             for sensor_id, getter in data_getters.items()
                         }
                     ),
+                    sync=False,
                 )
                 if CONFIG.get("deepsleep"):
                     break

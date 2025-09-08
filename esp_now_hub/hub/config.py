@@ -20,9 +20,12 @@ class Device(TypedDict):
     name: str
 
 
-class CONFIG(TypedDict):
+class Config(TypedDict):
     topic_prefix: str
     primary_master_key: NotRequired[str]
     wifi: Wifi
     mqtt: MQTT
     devices: list[Device]
+
+
+CONFIG: Config

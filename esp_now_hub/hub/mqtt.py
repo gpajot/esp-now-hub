@@ -32,6 +32,7 @@ class MQTTClient:
             keepalive=keepalive,
         )
         self._client.set_last_will(self._status_topic, b"offline", retain=True)
+        self.ping_interval = self._client.keepalive / 2 or 30
 
     def __enter__(self):
         self._connect()
@@ -57,6 +58,12 @@ class MQTTClient:
             except OSError:
                 i += 1
         return False
+
+    def ping(self):
+        try:
+            self._client.ping()
+        except OSError:
+            self._reconnect(1)
 
     def publish(self, topic, data, retain=False, keep_trying=False, encode=False):
         """Retry indefinitely if keep_trying or just once otherwise."""

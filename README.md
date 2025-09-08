@@ -13,12 +13,15 @@ A device is either a sensor or the hub. A test mode is available to display real
 
 1. Set up `config.py` (see below for structure) in root project folder.
 2.
-   - Run `./scripts/flash.bash hub|sensor|test PATH_TO_MICROPYTHON_FIRMWARE_BINARY` to flash the device
-   - Run `./scripts/update_config.bash` to simply update the config
+   - Run `python -m esptool write-flash --erase-all 0x1000 PATH_TO_MICROPYTHON_FIRMWARE_BINARY` to flash the device
+   - Run `./deploy.bash hub|sensor|test` to flash the device
 
 > [!NOTE]
 > If using ESPNow encryption, generate keys with `openssl rand -hex 8`.
 > Otherwise remove the properties in configurations.
+
+> [!TIP]
+> For test mode run `mpremote exec "import main"` to see sensor output.
 
 ### Hub config
 ```python
