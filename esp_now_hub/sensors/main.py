@@ -49,7 +49,11 @@ def run():
     finally:
         wlan.active(False)
 
-    machine.deepsleep(CONFIG["interval"] * 1000)
+    machine.deepsleep(int(CONFIG["interval"] * 1000))
 
 
-run()
+try:
+    run()
+except Exception as e:
+    print("error running sensor:", e)
+    machine.reset()

@@ -12,6 +12,7 @@ if test "$1" = 'hub'; then
   mpy-cross -o data/mqtt.mpy esp_now_hub/hub/mqtt.py
   mpy-cross -o data/esp_now.mpy esp_now_hub/hub/esp_now.py
   mpy-cross -o data/main.mpy esp_now_hub/hub/main.py
+  printf "import main\n" > data/boot.py
 else
   if test "$1" = 'test'; then
     echo "setting up sensor in test mode..."
@@ -19,6 +20,7 @@ else
   else
     echo "setting up sensor..."
     mpy-cross -o data/main.mpy esp_now_hub/sensors/main.py
+    printf "import main\n" > data/boot.py
   fi
   mpy-cross -o data/setup.mpy esp_now_hub/sensors/setup.py
   if grep -q 'AHT20' config.py; then
@@ -35,7 +37,6 @@ else
   fi
 fi
 mpy-cross -o data/config.mpy config.py
-printf "import main\n" > data/boot.py
 
 mpremote cp -r data/* :.
 
