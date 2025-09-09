@@ -1,4 +1,5 @@
 import esp_now
+import machine
 import mqtt
 import wifi
 from config import CONFIG
@@ -22,4 +23,8 @@ def run():
                     mqtt.send(mqtt_client, topic_prefix, *message)
 
 
-run()
+try:
+    run()
+except Exception as e:
+    print("error running hub:", e)
+    machine.reset()

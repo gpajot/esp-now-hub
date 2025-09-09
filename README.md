@@ -12,9 +12,8 @@ ESP-NOW proxy to gather data collected by sensors and send them to MQTT.
 A device is either a sensor or the hub. A test mode is available to display real time sensor data.
 
 1. Set up `config.py` (see below for structure) in root project folder.
-2.
-   - Run `python -m esptool write-flash --erase-all 0x1000 PATH_TO_MICROPYTHON_FIRMWARE_BINARY` to flash the device
-   - Run `./deploy.bash hub|sensor|test` to flash the device
+2. Flash the device with micropython firmware: `python -m esptool write-flash --erase-all 0x1000 $FIRMWARE_PATH`. 
+3. Deploy the code to the device: `./deploy.bash hub|sensor|test`. 
 
 > [!NOTE]
 > If using ESPNow encryption, generate keys with `openssl rand -hex 8`.
