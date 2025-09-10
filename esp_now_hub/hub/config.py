@@ -4,6 +4,7 @@ from typing import NotRequired, TypedDict
 class Wifi(TypedDict):
     ssid: str
     password: str
+    ifconfig: NotRequired[tuple[str, str, str, str]]
 
 
 class MQTT(TypedDict):
