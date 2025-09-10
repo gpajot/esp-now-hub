@@ -14,9 +14,10 @@ STATUSES = {
 
 
 class WLan:
-    def __init__(self, ssid, password):
+    def __init__(self, ssid, password, ifconfig):
         self._ssid = ssid
         self._password = password
+        self._ifconfig = ifconfig
         self._wlan = network.WLAN(network.STA_IF)
 
     def __enter__(self):
@@ -24,13 +25,15 @@ class WLan:
             self._disconnect()
             self._wlan.active(True)
             self._wlan.config(pm=self._wlan.PM_NONE)
+            if self._ifconfig:
+                self._wlan.ifconfig(self._ifconfig)
             self._wlan.connect(self._ssid, self._password)
             while self._wlan.status() in {
                 network.STAT_CONNECTING,
                 network.STAT_IDLE,
             }:
                 time.sleep(0.1)
-            if self._wlan.status() == network.STAT_GOT_IP:
+            if self._wlan.status() == network.STAT_GOT_IP and self._wlan.isconnected():
                 print("connected to wifi")
                 return self
             print(
