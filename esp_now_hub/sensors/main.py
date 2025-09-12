@@ -10,7 +10,7 @@ from setup import setup_sensors
 
 
 def run():
-    data_getters = setup_sensors(
+    data_getters, excluded_components_by_id = setup_sensors(
         CONFIG,
         initialize=machine.reset_cause() == machine.PWRON_RESET,
     )
@@ -34,11 +34,15 @@ def run():
                     hub_address,
                     json.dumps(
                         {
-                            sensor_id: getter()
+                            sensor_id: {
+                                k: v
+                                for k, v in getter().items()
+                                if k not in excluded_components_by_id[sensor_id]
+                            }
                             for sensor_id, getter in data_getters.items()
                         }
                     ),
-                    sync=False,
+                    False,
                 )
                 if CONFIG.get("deepsleep"):
                     break

@@ -1,8 +1,12 @@
 def setup_sensors(config, initialize):
     data_getters = {}
+    excluded_components_by_id = {}
     for cfg in config["sensors"]:
         sensor_id = cfg.pop("id")
         sensor_type = cfg.pop("type")
+        excluded_components_by_id[sensor_id] = (
+            cfg.pop("excluded_components", None) or set()
+        )
         if sensor_type == "MS5540C":
             from ms5540c import MS5540C
 
@@ -30,4 +34,4 @@ def setup_sensors(config, initialize):
                 calibration_cache_prefix=sensor_id,
                 **cfg
             ).get_measure  # fmt: skip
-    return data_getters
+    return data_getters, excluded_components_by_id
