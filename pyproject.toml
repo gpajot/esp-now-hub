@@ -19,7 +19,7 @@ dev = [
     "mypy ==1.17.1",
     "pre-commit ==4.3.0",
     "micropython-esp32-esp32_generic-stubs ==1.25.0.post5",
-    "mpremote ==1.25.0",
+    "mpremote ==1.26.1",
     "esptool ==5.0.2",
     "mpy-cross ==1.25.0.post2",
 ]
