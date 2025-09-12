@@ -1,4 +1,4 @@
-from typing import NotRequired, TypedDict
+from typing import Collection, NotRequired, TypedDict
 
 
 class Wifi(TypedDict):
@@ -26,7 +26,7 @@ class Config(TypedDict):
     primary_master_key: NotRequired[str]
     wifi: Wifi
     mqtt: MQTT
-    devices: list[Device]
+    devices: Collection[Device]
 
 
 CONFIG: Config

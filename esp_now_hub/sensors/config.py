@@ -1,9 +1,10 @@
-from typing import NotRequired, TypedDict
+from typing import Collection, NotRequired, TypedDict
 
 
 class Sensor(TypedDict):
     id: str
     type: str
+    excluded_components: NotRequired[Collection[str]]
 
 
 class Config(TypedDict):
@@ -13,7 +14,7 @@ class Config(TypedDict):
     hub_address: str
     primary_master_key: NotRequired[str]
     local_master_key: NotRequired[str]
-    sensors: list[Sensor]
+    sensors: Collection[Sensor]
 
 
 CONFIG: Config

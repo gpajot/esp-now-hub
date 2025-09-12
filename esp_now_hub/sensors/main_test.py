@@ -5,7 +5,7 @@ from setup import setup_sensors
 
 
 def run():
-    data_getters = setup_sensors(CONFIG, initialize=True)
+    data_getters, _ = setup_sensors(CONFIG, initialize=True)
     while True:
         for sensor_id, getter in data_getters.items():
             print(sensor_id, getter())
