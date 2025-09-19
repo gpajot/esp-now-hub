@@ -15,13 +15,13 @@ license-files = ["LICENSE"]
 [dependency-groups]
 dev = [
     "pytest ==8.4.2",
-    "ruff ==0.13.0",
-    "mypy ==1.17.1",
+    "ruff ==0.13.1",
+    "mypy ==1.18.2",
     "pre-commit ==4.3.0",
-    "micropython-esp32-esp32_generic-stubs ==1.25.0.post5",
-    "mpremote ==1.25.0",
-    "esptool ==5.0.2",
-    "mpy-cross ==1.25.0.post2",
+    "micropython-esp32-esp32_generic-stubs ==1.26.0.post1",
+    "mpremote ==1.26.1",
+    "esptool ==5.1.0",
+    "mpy-cross ==1.26.1.post2",
 ]
 
 [tool.ruff.lint]

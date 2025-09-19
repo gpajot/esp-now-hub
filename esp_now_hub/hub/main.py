@@ -1,30 +1,48 @@
+import select
+import sys
+import time
+
 import esp_now
-import machine
 import mqtt
 import wifi
 from config import CONFIG
 
 
 def run():
-    topic_prefix = CONFIG["topic_prefix"]
+    interval = CONFIG["interval"]
+    poll = select.poll()
     with wifi.WLan(**CONFIG["wifi"]):
-        with mqtt.MQTTClient(topic_prefix, **CONFIG["mqtt"]) as mqtt_client:
+        with mqtt.MQTTClient(
+            poll,
+            CONFIG["topic_prefix"],
+            CONFIG["devices"],
+            interval,
+            **CONFIG["mqtt"]
+        ) as mqtt_client:  # fmt: skip
             with esp_now.ESPNow(
-                CONFIG["devices"], CONFIG.get("primary_master_key")
+                poll,
+                CONFIG["devices"],
+                CONFIG.get("primary_master_key"),
             ) as esp_now_client:
                 print("waiting for messages...")
+                next_ping = interval * 1000
                 while True:
-                    mqtt_client.ping()
-                    message = esp_now_client.receive(
-                        int(mqtt_client.ping_interval * 1000)
-                    )
-                    if not message:
-                        continue
-                    mqtt.send(mqtt_client, topic_prefix, *message)
+                    for event in poll.poll(next_ping):
+                        if mqtt_client.wants(event[0]):
+                            mqtt_client.receive(event[1])
+                        elif esp_now_client.wants(event[0]):
+                            device_id, data = esp_now_client.receive(event[1])
+                            if device_id and data:
+                                mqtt_client.send(device_id, data)
+                        else:
+                            raise RuntimeError(f"unknown poll event {event}")
+                    next_ping = mqtt_client.ping()
 
 
-try:
-    run()
-except Exception as e:
-    print("error running hub:", e)
-    machine.reset()
+while True:
+    try:
+        run()
+    except Exception as exc:
+        print("error running hub:")
+        sys.print_exception(exc)  # type: ignore[attr-defined]
+        time.sleep(CONFIG["interval"] / 10)

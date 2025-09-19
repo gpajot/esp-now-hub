@@ -4,6 +4,8 @@ from unittest.mock import Mock
 import pytest
 
 sys.modules["machine"] = Mock()
+sys.modules["micropython"] = Mock()
+sys.modules["micropython"].const = lambda e: e  # type: ignore[attr-defined]
 from esp_now_hub.sensors.ms5803 import _compute  # noqa: E402
 
 

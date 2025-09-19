@@ -1,6 +1,23 @@
 import time
 
 import machine
+from micropython import const
+
+_MCLK_FREQ = const(32768)  # Hz, 50% duty cycle at this frequency.
+_SCLK_FREQ = const(500000)  # Hz
+_CONV_TIME = const(0.035)  # Sensor requires 35ms to convert readings.
+# Commands: 3 high start bits, command bits, 3 low stop bits.
+# Leading zeros are added to have multiples of 8.
+# Pressure and temperature require 2 additional clock ticks at the end.
+# Words require 1 additional clock ticks at the end.
+_MEASURE_PRES_CMD = const(b"\x0f\x40")  # 111 1010 000 00
+_MEASURE_TEMP_CMD = const(b"\x0f\x20")  # 111 1001 000 00
+_READ_WORD1_CMD = const(b"\x1d\x50")  # 111 010101 000 0
+_READ_WORD2_CMD = const(b"\x1d\x60")  # 111 010110 000 0
+_READ_WORD3_CMD = const(b"\x1d\x90")  # 111 011001 000 0
+_READ_WORD4_CMD = const(b"\x1d\xa0")  # 111 011010 000 0
+_RESET_CMD = const(b"\x15\x55\x40")  # 101010101010101000000
+_CALIB_CACHE = const("ms5540c-calibration.txt")
 
 
 class MS5540C:
@@ -8,32 +25,16 @@ class MS5540C:
     See hhttps://www.te.com/commerce/DocumentDelivery/DDEController?Action=showdoc&DocId=Data+Sheet%7FMS5540C%7FB3%7Fpdf%7FEnglish%7FENG_DS_MS5540C_B3.pdf%7FCAT-BLPS0033
     """
 
-    MCLK_FREQ = 32768  # Hz, 50% duty cycle at this frequency.
-    SCLK_FREQ = 500000  # Hz
-    CONVERSION_DURATION = 0.035  # Sensor requires 35ms to convert readings.
-    # Commands: 3 high start bits, command bits, 3 low stop bits.
-    # Leading zeros are added to have multiples of 8.
-    # Pressure and temperature require 2 additional clock ticks at the end.
-    # Words require 1 additional clock ticks at the end.
-    READ_PRESSURE = b"\x0f\x40"  # 111 1010 000 00
-    READ_TEMPERATURE = b"\x0f\x20"  # 111 1001 000 00
-    READ_WORD1 = b"\x1d\x50"  # 111 010101 000 0
-    READ_WORD2 = b"\x1d\x60"  # 111 010110 000 0
-    READ_WORD3 = b"\x1d\x90"  # 111 011001 000 0
-    READ_WORD4 = b"\x1d\xa0"  # 111 011010 000 0
-    RESET = b"\x15\x55\x40"  # 101010101010101000000
-    CALIBRATION_CACHE = "ms5540c-calibration.txt"
-
     def __init__(self, sclk, din, dout, mclk, calibration_cache_prefix=None):
         self._spi_params = {
-            "baudrate": self.SCLK_FREQ,
+            "baudrate": _SCLK_FREQ,
             "sck": machine.Pin(sclk),
             "mosi": machine.Pin(din),
             "miso": machine.Pin(dout),
         }
         self._spi = machine.SoftSPI(**self._spi_params)
         self._pwm_params = {
-            "freq": self.MCLK_FREQ,
+            "freq": _MCLK_FREQ,
             "duty_u16": 32768,
         }
         self._pwm = machine.PWM(machine.Pin(mclk), **self._pwm_params)
@@ -60,26 +61,22 @@ class MS5540C:
 
     def _get_measure(self, command):
         self._write(command)
-        time.sleep(self.CONVERSION_DURATION)
+        time.sleep(_CONV_TIME)
         return self._read()
 
     def _get_calibration_coefficients(self, cache_prefix):
-        cache = (
-            "-".join((cache_prefix, self.CALIBRATION_CACHE))
-            if cache_prefix
-            else self.CALIBRATION_CACHE
-        )
+        cache = "-".join((cache_prefix, _CALIB_CACHE)) if cache_prefix else _CALIB_CACHE
         try:
             with open(cache, "r") as f:
                 return tuple(map(int, f.read().strip().split(",")))
         except Exception:
             pass
-        self._write(self.RESET)
+        self._write(_RESET_CMD)
         coefficients = _get_coefficients(
-            self._get_word(self.READ_WORD1),
-            self._get_word(self.READ_WORD2),
-            self._get_word(self.READ_WORD3),
-            self._get_word(self.READ_WORD4),
+            self._get_word(_READ_WORD1_CMD),
+            self._get_word(_READ_WORD2_CMD),
+            self._get_word(_READ_WORD3_CMD),
+            self._get_word(_READ_WORD4_CMD),
         )
         with open(cache, "w") as f:
             f.write(",".join(map(str, coefficients)))
@@ -89,9 +86,9 @@ class MS5540C:
     def get_measure(self):
         """Return pressure (bar), temperature (Celsius)."""
         self._pwm.init(**self._pwm_params)
-        self._write(self.RESET)
-        d1 = self._get_measure(self.READ_PRESSURE)
-        d2 = self._get_measure(self.READ_TEMPERATURE)
+        self._write(_RESET_CMD)
+        d1 = self._get_measure(_MEASURE_PRES_CMD)
+        d2 = self._get_measure(_MEASURE_TEMP_CMD)
         pres, temp = _compute(d1, d2, *self._calibration_coefficients)
         self.deinit()
         return {"pressure": pres, "temperature": temp}

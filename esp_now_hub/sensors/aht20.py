@@ -1,6 +1,14 @@
 import time
 
 import machine
+from micropython import const
+
+_SETUP_TIME = const(0.1)  # Needs 100ms after power up.
+_STATUS_CMD = const(b"\x71")
+_INIT_CMD = const(b"\xbe\x08\x00")
+_INIT_TIME = const(0.01)
+_MEASURE_CMD = const(b"\xac\x33\x00")
+_MEASURE_TIME = const(0.08)
 
 
 class AHT20:
@@ -8,30 +16,23 @@ class AHT20:
     See https://asairsensors.com/wp-content/uploads/2021/09/Data-Sheet-AHT20-Humidity-and-Temperature-Sensor-ASAIR-V1.0.03.pdf
     """
 
-    SETUP_TIME = 0.1  # Needs 100ms after power up.
-    STATUS_CMD = b"\x71"
-    INIT_CMD = b"\xbe\x08\x00"
-    INIT_TIME = 0.01
-    MEASURE_CMD = b"\xac\x33\x00"
-    MEASURE_TIME = 0.08
-
     def __init__(self, scl, sda, address=0x38, initialize=True):
         self._i2c = machine.SoftI2C(scl=machine.Pin(scl), sda=machine.Pin(sda))
         self._address = address
         if initialize:
-            time.sleep(self.SETUP_TIME)
+            time.sleep(_SETUP_TIME)
             if not self._get_status() & 0x08:
-                self._i2c.writeto(self._address, self.INIT_CMD)
-                time.sleep(self.INIT_TIME)
+                self._i2c.writeto(self._address, _INIT_CMD)
+                time.sleep(_INIT_TIME)
 
     def _get_status(self):
-        self._i2c.writeto(self._address, self.STATUS_CMD)
+        self._i2c.writeto(self._address, _STATUS_CMD)
         return self._i2c.readfrom(self._address, 1)[0]
 
     def get_measure(self):
         """Return humidity (0-100), temperature (Celsius)."""
-        self._i2c.writeto(self._address, self.MEASURE_CMD)
-        time.sleep(self.MEASURE_TIME)
+        self._i2c.writeto(self._address, _MEASURE_CMD)
+        time.sleep(_MEASURE_TIME)
         while self._get_status() & 0x80:
             time.sleep(0.01)
         data = self._i2c.readfrom(self._address, 6)

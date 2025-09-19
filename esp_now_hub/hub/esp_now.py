@@ -1,15 +1,17 @@
+import binascii
 import json
+import select
 
 import espnow
-import ubinascii
 
 
 class ESPNow:
-    def __init__(self, devices, pmk=None):
+    def __init__(self, poll, devices, pmk=None):
+        self._poll = poll
         self._devices = devices
         self._pmk = pmk
         self._esp_now = espnow.ESPNow()
-        self._name_by_address = {}
+        self._included_components = {}
 
     def __enter__(self):
         self._esp_now.active(False)
@@ -17,25 +19,39 @@ class ESPNow:
         if self._pmk:
             self._esp_now.set_pmk(self._pmk)
         for device in self._devices:
-            address = ubinascii.unhexlify(
+            address = binascii.unhexlify(
                 device["address"].replace(":", "").encode("utf-8")
             )
             if device.get("local_master_key"):
                 self._esp_now.add_peer(address, lmk=device["local_master_key"])
-            self._name_by_address[address] = device.get("name") or device["address"]
+            self._included_components[address] = device["components"]
+        self._poll.register(self._esp_now, select.POLLIN)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        self._poll.unregister(self._esp_now)
         self._esp_now.active(False)
 
-    def receive(self, timeout):
-        address, payload = self._esp_now.recv(timeout)
-        if address and payload:
-            name = self._name_by_address.get(address)
-            if name:
-                return (
-                    address.hex(),
-                    name,
-                    json.loads(payload.decode("utf-8")),
-                )
-        return None
+    def wants(self, obj):
+        return obj is self._esp_now
+
+    def receive(self, event):
+        if event & select.POLLERR or event & select.POLLHUP:
+            raise RuntimeError("error event received for ESP-Now")
+        if event & select.POLLIN:
+            address, payload = self._esp_now.recv(0)
+            if address and payload:
+                components = self._included_components.get(address)
+                if components:
+                    data = {}
+                    for sensor_id, sensor_data in json.loads(
+                        payload.decode("utf-8")
+                    ).items():
+                        if sensor_id not in components:
+                            continue
+                        for prop, datum in sensor_data.items():
+                            if prop in components[sensor_id]:
+                                data[f"{sensor_id}_{prop}"] = datum
+                    if data:
+                        return address.hex(), data
+        return None, None

@@ -2,36 +2,44 @@ import struct
 import time
 
 import machine
+from micropython import const
+
+_MODES = [
+    const("ultra-low-power"),
+    const("low-power"),
+    const("standard-resolution"),
+    const("high-resolution"),
+    const("ultra-high-resolution"),
+]
+# 3 bits: standby duration, 3 bits: IIR filter time, 1 bit: nothing, 1 bit: spi
+_CONFIG_REG = const(0xF5)
+_CONFIG_VAL = const(b"\x00")  # 000 000 0 0
+# 3 bits: temp oversampling, 3 bits: press oversampling, 2 bits: mode
+_CTRL_MEASURE_REG = const(0xF4)
+_CTRL_MEASURE_VALS = [
+    const(b"\x25"),  # 001 001 01
+    const(b"\x29"),  # 001 010 01
+    const(b"\x2d"),  # 001 011 01
+    const(b"\x31"),  # 001 100 01
+    const(b"\x55"),  # 010 101 01
+]
+_MEASURE_REG = const(0xF7)
+_CONV_TIMES = [
+    const(0.0064),
+    const(0.0087),
+    const(0.0133),
+    const(0.0225),
+    const(0.0432),
+]
+_CALIB_REG = const(0x88)  # 24 bytes.
+_CALIB_STRUCT = const("<H2hH8h")  # dig_T1 -> dig_T3, dig_P1 -> dig_P9
+_CALIB_CACHE = const("bmp280-calibration.txt")
 
 
 class BMP280:
     """Atmospheric pressure and temperature sensor.
     See https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bmp280-ds001.pdf
     """
-
-    CONFIG_REGISTER = 0xF5  # 3 bits: standby duration, 3 bits: IIR filter time, 1 bit: nothing, 1 bit: spi
-    CONFIG_VALUE = b"\x00"  # 000 000 0 0
-    CTRL_MEASURE_REGISTER = (
-        0xF4  # 3 bits: temp oversampling, 3 bits: press oversampling, 2 bits: mode
-    )
-    CTRL_MEASURE_VALUES = {
-        "ultra-low-power": b"\x25",  # 001 001 01
-        "low-power": b"\x29",  # 001 010 01
-        "standard-resolution": b"\x2d",  # 001 011 01
-        "high-resolution": b"\x31",  # 001 100 01
-        "ultra-high-resolution": b"\x55",  # 010 101 01
-    }
-    MEASURE_REGISTER = 0xF7
-    MEASURE_DURATIONS = {
-        "ultra-low-power": 0.0064,
-        "low-power": 0.0087,
-        "standard-resolution": 0.0133,
-        "high-resolution": 0.0225,
-        "ultra-high-resolution": 0.0432,
-    }
-    CALIBRATION_REGISTER = 0x88  # 24 bytes.
-    CALIBRATION_STRUCT = "<H2hH8h"  # dig_T1 -> dig_T3, dig_P1 -> dig_P9
-    CALIBRATION_CACHE = "bmp280-calibration.txt"
 
     def __init__(
         self,
@@ -44,21 +52,15 @@ class BMP280:
     ):
         self._i2c = machine.SoftI2C(scl=machine.Pin(scl), sda=machine.Pin(sda))
         self._address = address
-        self._mode = mode
+        self._mode_idx = _MODES.index(mode)
         if initialize:
-            self._i2c.writeto_mem(
-                self._address, self.CONFIG_REGISTER, self.CONFIG_VALUE
-            )
+            self._i2c.writeto_mem(self._address, _CONFIG_REG, _CONFIG_VAL)
         self._calibration_coefficients = self._get_calibration_coefficients(
             calibration_cache_prefix
         )
 
     def _get_calibration_coefficients(self, cache_prefix):
-        cache = (
-            "-".join((cache_prefix, self.CALIBRATION_CACHE))
-            if cache_prefix
-            else self.CALIBRATION_CACHE
-        )
+        cache = "-".join((cache_prefix, _CALIB_CACHE)) if cache_prefix else _CALIB_CACHE
         try:
             with open(cache, "r") as f:
                 return tuple(map(int, f.read().strip().split(",")))
@@ -66,10 +68,10 @@ class BMP280:
             pass
         data = self._i2c.readfrom_mem(
             self._address,
-            self.CALIBRATION_REGISTER,
-            struct.calcsize(self.CALIBRATION_STRUCT),
+            _CALIB_REG,
+            struct.calcsize(_CALIB_STRUCT),
         )
-        coefficients = struct.unpack(self.CALIBRATION_STRUCT, data)
+        coefficients = struct.unpack(_CALIB_STRUCT, data)
         with open(cache, "w") as f:
             f.write(",".join(map(str, coefficients)))
         return coefficients
@@ -79,16 +81,12 @@ class BMP280:
         # Set forced mode to trigger measure.
         self._i2c.writeto_mem(
             self._address,
-            self.CTRL_MEASURE_REGISTER,
-            self.CTRL_MEASURE_VALUES[self._mode],
+            _CTRL_MEASURE_REG,
+            _CTRL_MEASURE_VALS[self._mode_idx],
         )
         # Wait for measurements to complete.
-        time.sleep(self.MEASURE_DURATIONS[self._mode])
-        data = self._i2c.readfrom_mem(
-            self._address,
-            self.MEASURE_REGISTER,
-            6,
-        )
+        time.sleep(_CONV_TIMES[self._mode_idx])
+        data = self._i2c.readfrom_mem(self._address, _MEASURE_REG, 6)
         p = (data[0] << 16 | data[1] << 8 | data[2]) >> 4
         t = (data[3] << 16 | data[4] << 8 | data[5]) >> 4
         pres, temp = _compute(t, p, *self._calibration_coefficients)
