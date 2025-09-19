@@ -4,7 +4,6 @@ from typing import Collection, NotRequired, TypedDict
 class Sensor(TypedDict):
     id: str
     type: str
-    excluded_components: NotRequired[Collection[str]]
 
 
 class Config(TypedDict):

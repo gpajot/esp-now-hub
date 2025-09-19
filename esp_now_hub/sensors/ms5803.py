@@ -1,6 +1,17 @@
 import time
 
 import machine
+from micropython import const
+
+_OSRS = [const(256), const(512), const(1024), const(2048), const(4096)]
+_MEASURE_PRES_CMD = const(0x40)
+_MEASURE_TEMP_CMD = const(0x50)
+# I found max conversion times from the datasheet are too low,
+# as device will often report busy.
+_CONV_TIMES = [const(0.002), const(0.004), const(0.005), const(0.007), const(0.011)]
+_READ_MEASURE_CMD = const(b"\x00")
+_READ_CALIB_COEF_CMD = const(0xA2)
+_CALIB_CACHE = const("ms5803-calibration.txt")
 
 
 class MS5803:
@@ -8,74 +19,34 @@ class MS5803:
     See https://www.te.com/commerce/DocumentDelivery/DDEController?Action=showdoc&DocId=Data+Sheet%7FMS5803-14BA%7FB3%7Fpdf%7FEnglish%7FENG_DS_MS5803-14BA_B3.pdf%7FCAT-BLPS0013
     """
 
-    RESET_CMD = b"\x1e"
-    RESET_TIME = 0.005
-    READ_PRESSURE_CMDS = {
-        256: b"\x40",
-        512: b"\x42",
-        1024: b"\x44",
-        2048: b"\x46",
-        4096: b"\x48",
-    }
-    READ_TEMPERATURE_CMDS = {
-        256: b"\x50",
-        512: b"\x52",
-        1024: b"\x54",
-        2048: b"\x56",
-        4096: b"\x58",
-    }
-    CONVERTION_TIMES = {
-        256: 0.0006,
-        512: 0.00117,
-        1024: 0.00228,
-        2048: 0.00454,
-        4096: 0.00904,
-    }
-    READ_MEASURE_CMD = b"\x00"
-    CALIBRATION_COEFFICIENT_CMDS = (
-        b"\xa2",
-        b"\xa4",
-        b"\xa6",
-        b"\xa8",
-        b"\xaa",
-        b"\xac",
-    )
-    CALIBRATION_CACHE = "ms5803-calibration.txt"
-
     def __init__(
         self,
         scl,
         sda,
-        address=0x77,
-        pressure_resolution=256,
+        address=0x76,
+        pressure_resolution=1024,
         temperature_resolution=256,
-        initialize=True,
         calibration_cache_prefix=None,
     ):
         self._i2c = machine.SoftI2C(scl=machine.Pin(scl), sda=machine.Pin(sda))
         self._address = address
-        self._pressure_resolution = pressure_resolution
-        self._temperature_resolution = temperature_resolution
-        if initialize:
-            self._i2c.writeto(self._address, self.RESET_CMD)
-            time.sleep(self.RESET_TIME)
+        self._p_res_idx = _OSRS.index(pressure_resolution)
+        self._t_res_idx = _OSRS.index(temperature_resolution)
         self._calibration_coefficients = self._get_calibration_coefficients(
             calibration_cache_prefix
         )
 
     def _get_calibration_coefficients(self, cache_prefix):
-        cache = (
-            "-".join((cache_prefix, self.CALIBRATION_CACHE))
-            if cache_prefix
-            else self.CALIBRATION_CACHE
-        )
+        cache = "-".join((cache_prefix, _CALIB_CACHE)) if cache_prefix else _CALIB_CACHE
         try:
             with open(cache, "r") as f:
                 return tuple(map(int, f.read().strip().split(",")))
         except Exception:
             pass
         coefficients = tuple(
-            self._get_calibration_coefficient(self.CALIBRATION_COEFFICIENT_CMDS[i])
+            self._get_calibration_coefficient(
+                (_READ_CALIB_COEF_CMD + 0x02 * i).to_bytes(1),
+            )
             for i in range(6)
         )
         with open(cache, "w") as f:
@@ -84,22 +55,23 @@ class MS5803:
 
     def _get_calibration_coefficient(self, cmd):
         self._i2c.writeto(self._address, cmd)
-        return int.from_bytes(self._i2c.readfrom(self._address, 2), byteorder="big")
+        return int.from_bytes(self._i2c.readfrom(self._address, 2), "big")
 
     def _get_measure(self, cmd, wait_time):
         self._i2c.writeto(self._address, cmd)
         time.sleep(wait_time)
-        return int.from_bytes(self._i2c.readfrom(self._address, 3), byteorder="big")
+        self._i2c.writeto(self._address, _READ_MEASURE_CMD)
+        return int.from_bytes(self._i2c.readfrom(self._address, 3), "big")
 
     def get_measure(self):
         """Return pressure (bar), temperature (Celsius)."""
         d1 = self._get_measure(
-            self.READ_PRESSURE_CMDS[self._pressure_resolution],
-            self.CONVERTION_TIMES[self._pressure_resolution],
+            (_MEASURE_PRES_CMD + 0x02 * self._p_res_idx).to_bytes(1),
+            _CONV_TIMES[self._p_res_idx],
         )
         d2 = self._get_measure(
-            self.READ_TEMPERATURE_CMDS[self._temperature_resolution],
-            self.CONVERTION_TIMES[self._temperature_resolution],
+            (_MEASURE_TEMP_CMD + 0x02 * self._t_res_idx).to_bytes(1),
+            _CONV_TIMES[self._t_res_idx],
         )
         pres, temp = _compute(d1, d2, *self._calibration_coefficients)
         return {"pressure": pres, "temperature": temp}

@@ -12,18 +12,23 @@ class MQTT(TypedDict):
     port: NotRequired[int]
     user: NotRequired[str]
     password: NotRequired[str]
-    keepalive: NotRequired[int]
 
 
 class Device(TypedDict):
     address: str
     local_master_key: NotRequired[str]
+    manufacturer: NotRequired[str]
+    model: NotRequired[str]
     name: str
+    keepalive: int
+    # sensor_id -> properties.
+    components: dict[str, Collection[str]]
 
 
 class Config(TypedDict):
     topic_prefix: str
     primary_master_key: NotRequired[str]
+    interval: int
     wifi: Wifi
     mqtt: MQTT
     devices: Collection[Device]
