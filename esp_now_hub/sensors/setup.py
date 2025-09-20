@@ -8,15 +8,15 @@ def setup_sensors(config, initialize):
             from ms5540c import MS5540C
 
             data_getters[sensor_id] = MS5540C(
-                calibration_cache_prefix=sensor_id,
+                calibration_cache_namespace=sensor_id,
                 **kw
             ).get_measure  # fmt: skip
         elif sensor_type == "BMP280":
             from bmp280 import BMP280
 
             data_getters[sensor_id] = BMP280(
+                calibration_cache_namespace=sensor_id,
                 initialize=initialize,
-                calibration_cache_prefix=sensor_id,
                 **kw
             ).get_measure  # fmt: skip
         elif sensor_type == "AHT20":
@@ -27,7 +27,7 @@ def setup_sensors(config, initialize):
             from ms5803 import MS5803
 
             data_getters[sensor_id] = MS5803(
-                calibration_cache_prefix=sensor_id,
+                calibration_cache_namespace=sensor_id,
                 **kw
             ).get_measure  # fmt: skip
     return data_getters
