@@ -1,9 +1,15 @@
 from typing import Collection, NotRequired, TypedDict
 
 
+class SendConfig(TypedDict):
+    diff: float
+    seconds: float
+
+
 class Sensor(TypedDict):
     id: str
     type: str
+    send_configs: NotRequired[dict[str, SendConfig]]
 
 
 class Config(TypedDict):

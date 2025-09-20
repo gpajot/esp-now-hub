@@ -7,10 +7,11 @@ import machine
 import network
 from config import CONFIG
 from setup import setup_sensors
+from value_cache import process_sensor_data
 
 
 def run():
-    data_getters = setup_sensors(
+    data_getters, send_configs = setup_sensors(
         CONFIG,
         initialize=machine.reset_cause() == machine.PWRON_RESET,
     )
@@ -30,14 +31,16 @@ def run():
             )
             e.add_peer(hub_address, lmk=CONFIG.get("local_master_key"))
             while True:
+                data = {}
+                for sensor_id, getter in data_getters.items():
+                    sensor_data = process_sensor_data(
+                        sensor_id, getter(), send_configs[sensor_id]
+                    )
+                    if sensor_data:
+                        data[sensor_id] = sensor_data
                 e.send(
                     hub_address,
-                    json.dumps(
-                        {
-                            sensor_id: getter()
-                            for sensor_id, getter in data_getters.items()
-                        }
-                    ),
+                    json.dumps(data),
                 )
                 if CONFIG.get("deepsleep"):
                     break

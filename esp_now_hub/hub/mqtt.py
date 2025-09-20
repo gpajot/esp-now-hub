@@ -164,7 +164,8 @@ class MQTTClient:
         if device_id not in self._last_receive_ticks:
             self._publish(self._get_status_topic(device_id), b"online", retain=True)
         self._last_receive_ticks[device_id] = time.ticks_ms()  # type: ignore[attr-defined]
-        self._publish(self._get_state_topic(device_id), data, encode=True)
+        if data:
+            self._publish(self._get_state_topic(device_id), data, encode=True)
 
     def _publish(self, topic, data, retain=False, keep_trying=False, encode=False):
         """Retry indefinitely if keep_trying or just once otherwise."""

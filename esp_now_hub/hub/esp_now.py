@@ -52,6 +52,5 @@ class ESPNow:
                         for prop, datum in sensor_data.items():
                             if prop in components[sensor_id]:
                                 data[f"{sensor_id}_{prop}"] = datum
-                    if data:
-                        return address.hex(), data
+                    return address.hex(), data
         return None, None
