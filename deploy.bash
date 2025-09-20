@@ -23,6 +23,7 @@ else
     printf "import main\n" > data/boot.py
   fi
   mpy-cross -o data/setup.mpy esp_now_hub/sensors/setup.py
+  mpy-cross -o data/value_cache.mpy esp_now_hub/sensors/value_cache.py
   if grep -q 'AHT20' config.py; then
     mpy-cross -o data/aht20.mpy esp_now_hub/sensors/aht20.py
   fi

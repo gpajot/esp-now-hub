@@ -32,7 +32,7 @@ def run():
                             mqtt_client.receive(event[1])
                         elif esp_now_client.wants(event[0]):
                             device_id, data = esp_now_client.receive(event[1])
-                            if device_id and data:
+                            if device_id and data is not None:
                                 mqtt_client.send(device_id, data)
                         else:
                             raise RuntimeError(f"unknown poll event {event}")

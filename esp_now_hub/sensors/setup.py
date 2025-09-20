@@ -1,9 +1,11 @@
 def setup_sensors(config, initialize):
     data_getters = {}
+    send_configs = {}
     for cfg in config["sensors"]:
         sensor_id = cfg["id"]
         sensor_type = cfg["type"]
-        kw = {k: v for k, v in cfg.items() if k not in {"id", "type"}}
+        send_configs[sensor_id] = cfg.get("send_config") or {}
+        kw = {k: v for k, v in cfg.items() if k not in {"id", "type", "send_config"}}
         if sensor_type == "MS5540C":
             from ms5540c import MS5540C
 
@@ -30,4 +32,4 @@ def setup_sensors(config, initialize):
                 calibration_cache_namespace=sensor_id,
                 **kw
             ).get_measure  # fmt: skip
-    return data_getters
+    return data_getters, send_configs
