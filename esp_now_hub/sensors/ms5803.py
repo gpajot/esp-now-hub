@@ -1,5 +1,6 @@
 import time
 
+import esp32
 import machine
 from micropython import const
 
@@ -21,27 +22,28 @@ class MS5803:
 
     def __init__(
         self,
+        calibration_cache_namespace,
         scl,
         sda,
         address=0x76,
         pressure_resolution=1024,
         temperature_resolution=256,
-        calibration_cache_prefix=None,
     ):
         self._i2c = machine.SoftI2C(scl=machine.Pin(scl), sda=machine.Pin(sda))
         self._address = address
         self._p_res_idx = _OSRS.index(pressure_resolution)
         self._t_res_idx = _OSRS.index(temperature_resolution)
         self._calibration_coefficients = self._get_calibration_coefficients(
-            calibration_cache_prefix
+            calibration_cache_namespace
         )
 
-    def _get_calibration_coefficients(self, cache_prefix):
-        cache = "-".join((cache_prefix, _CALIB_CACHE)) if cache_prefix else _CALIB_CACHE
+    def _get_calibration_coefficients(self, namespace):
+        nvs = esp32.NVS(namespace)
         try:
-            with open(cache, "r") as f:
-                return tuple(map(int, f.read().strip().split(",")))
-        except Exception:
+            buf = bytearray()
+            nvs.get_blob(_CALIB_CACHE, buf)
+            return tuple(map(int, buf.decode("utf-8").strip().split(",")))
+        except OSError:
             pass
         coefficients = tuple(
             self._get_calibration_coefficient(
@@ -49,8 +51,8 @@ class MS5803:
             )
             for i in range(6)
         )
-        with open(cache, "w") as f:
-            f.write(",".join(map(str, coefficients)))
+        nvs.set_blob(_CALIB_CACHE, ",".join(map(str, coefficients)).encode("utf-8"))
+        nvs.commit()
         return coefficients
 
     def _get_calibration_coefficient(self, cmd):

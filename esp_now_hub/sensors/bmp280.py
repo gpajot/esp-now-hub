@@ -1,6 +1,7 @@
 import struct
 import time
 
+import esp32
 import machine
 from micropython import const
 
@@ -33,7 +34,7 @@ _CONV_TIMES = [
 ]
 _CALIB_REG = const(0x88)  # 24 bytes.
 _CALIB_STRUCT = const("<H2hH8h")  # dig_T1 -> dig_T3, dig_P1 -> dig_P9
-_CALIB_CACHE = const("bmp280-calibration.txt")
+_CALIB_CACHE = const("calibration")
 
 
 class BMP280:
@@ -43,12 +44,12 @@ class BMP280:
 
     def __init__(
         self,
+        calibration_cache_namespace,
         scl,
         sda,
         address=0x77,
         mode="ultra-low-power",
         initialize=True,
-        calibration_cache_prefix=None,
     ):
         self._i2c = machine.SoftI2C(scl=machine.Pin(scl), sda=machine.Pin(sda))
         self._address = address
@@ -56,15 +57,16 @@ class BMP280:
         if initialize:
             self._i2c.writeto_mem(self._address, _CONFIG_REG, _CONFIG_VAL)
         self._calibration_coefficients = self._get_calibration_coefficients(
-            calibration_cache_prefix
+            calibration_cache_namespace
         )
 
-    def _get_calibration_coefficients(self, cache_prefix):
-        cache = "-".join((cache_prefix, _CALIB_CACHE)) if cache_prefix else _CALIB_CACHE
+    def _get_calibration_coefficients(self, namespace):
+        nvs = esp32.NVS(namespace)
         try:
-            with open(cache, "r") as f:
-                return tuple(map(int, f.read().strip().split(",")))
-        except Exception:
+            buf = bytearray()
+            nvs.get_blob(_CALIB_CACHE, buf)
+            return tuple(map(int, buf.decode("utf-8").strip().split(",")))
+        except OSError:
             pass
         data = self._i2c.readfrom_mem(
             self._address,
@@ -72,8 +74,8 @@ class BMP280:
             struct.calcsize(_CALIB_STRUCT),
         )
         coefficients = struct.unpack(_CALIB_STRUCT, data)
-        with open(cache, "w") as f:
-            f.write(",".join(map(str, coefficients)))
+        nvs.set_blob(_CALIB_CACHE, ",".join(map(str, coefficients)).encode("utf-8"))
+        nvs.commit()
         return coefficients
 
     def get_measure(self):

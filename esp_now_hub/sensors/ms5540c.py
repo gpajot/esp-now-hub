@@ -1,5 +1,6 @@
 import time
 
+import esp32
 import machine
 from micropython import const
 
@@ -25,7 +26,7 @@ class MS5540C:
     See hhttps://www.te.com/commerce/DocumentDelivery/DDEController?Action=showdoc&DocId=Data+Sheet%7FMS5540C%7FB3%7Fpdf%7FEnglish%7FENG_DS_MS5540C_B3.pdf%7FCAT-BLPS0033
     """
 
-    def __init__(self, sclk, din, dout, mclk, calibration_cache_prefix=None):
+    def __init__(self, calibration_cache_namespace, sclk, din, dout, mclk):
         self._spi_params = {
             "baudrate": _SCLK_FREQ,
             "sck": machine.Pin(sclk),
@@ -39,7 +40,7 @@ class MS5540C:
         }
         self._pwm = machine.PWM(machine.Pin(mclk), **self._pwm_params)
         self._calibration_coefficients = self._get_calibration_coefficients(
-            calibration_cache_prefix
+            calibration_cache_namespace
         )
 
     def deinit(self):
@@ -64,12 +65,13 @@ class MS5540C:
         time.sleep(_CONV_TIME)
         return self._read()
 
-    def _get_calibration_coefficients(self, cache_prefix):
-        cache = "-".join((cache_prefix, _CALIB_CACHE)) if cache_prefix else _CALIB_CACHE
+    def _get_calibration_coefficients(self, namespace):
+        nvs = esp32.NVS(namespace)
         try:
-            with open(cache, "r") as f:
-                return tuple(map(int, f.read().strip().split(",")))
-        except Exception:
+            buf = bytearray()
+            nvs.get_blob(_CALIB_CACHE, buf)
+            return tuple(map(int, buf.decode("utf-8").strip().split(",")))
+        except OSError:
             pass
         self._write(_RESET_CMD)
         coefficients = _get_coefficients(
@@ -78,8 +80,8 @@ class MS5540C:
             self._get_word(_READ_WORD3_CMD),
             self._get_word(_READ_WORD4_CMD),
         )
-        with open(cache, "w") as f:
-            f.write(",".join(map(str, coefficients)))
+        nvs.set_blob(_CALIB_CACHE, ",".join(map(str, coefficients)).encode("utf-8"))
+        nvs.commit()
         self.deinit()
         return coefficients
 
