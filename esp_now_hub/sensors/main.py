@@ -7,7 +7,7 @@ import machine
 import network
 from config import CONFIG
 from setup import setup_sensors
-from value_cache import process_sensor_data
+from value_cache import process_sensor_data, store_sensor_data
 
 
 def run():
@@ -38,10 +38,11 @@ def run():
                     )
                     if sensor_data:
                         data[sensor_id] = sensor_data
-                e.send(
-                    hub_address,
-                    json.dumps(data),
-                )
+                if e.send(hub_address, json.dumps(data)):
+                    for sensor_id, sensor_data in data.items():
+                        store_sensor_data(
+                            sensor_id, sensor_data, send_configs[sensor_id]
+                        )
                 if CONFIG.get("deepsleep"):
                     break
                 else:

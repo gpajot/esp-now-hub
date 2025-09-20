@@ -10,9 +10,10 @@ def run():
     data_getters, send_configs = setup_sensors(CONFIG, initialize=True)
     while True:
         for sensor_id, getter in data_getters.items():
-            data = process_sensor_data(sensor_id, getter(), send_configs[sensor_id])
-            if data:
-                print(sensor_id, data)
+            print(
+                sensor_id,
+                process_sensor_data(sensor_id, getter(), send_configs[sensor_id]),
+            )
         time.sleep(CONFIG["interval"])
 
 

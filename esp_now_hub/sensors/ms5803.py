@@ -8,11 +8,11 @@ _OSRS = [const(256), const(512), const(1024), const(2048), const(4096)]
 _MEASURE_PRES_CMD = const(0x40)
 _MEASURE_TEMP_CMD = const(0x50)
 # I found max conversion times from the datasheet are too low,
-# as device will often report busy.
-_CONV_TIMES = [const(0.002), const(0.004), const(0.005), const(0.007), const(0.011)]
+# as device will often report busy or return 0.
+_CONV_TIMES = [const(0.004), const(0.006), const(0.007), const(0.010), const(0.015)]
 _READ_MEASURE_CMD = const(b"\x00")
 _READ_CALIB_COEF_CMD = const(0xA2)
-_CALIB_CACHE = const("ms5803-calibration.txt")
+_CALIB_CACHE = const("calibration")
 
 
 class MS5803:
@@ -40,9 +40,11 @@ class MS5803:
     def _get_calibration_coefficients(self, namespace):
         nvs = esp32.NVS(namespace)
         try:
-            buf = bytearray()
+            buf = bytearray(100)
             nvs.get_blob(_CALIB_CACHE, buf)
-            return tuple(map(int, buf.decode("utf-8").strip().split(",")))
+            return tuple(
+                map(int, buf.replace(b"\x00", b"").decode("utf-8").strip().split(","))
+            )
         except OSError:
             pass
         coefficients = tuple(
@@ -75,6 +77,8 @@ class MS5803:
             (_MEASURE_TEMP_CMD + 0x02 * self._t_res_idx).to_bytes(1),
             _CONV_TIMES[self._t_res_idx],
         )
+        if not d1 or not d2:
+            raise ValueError("could not fetch value from sensor")
         pres, temp = _compute(d1, d2, *self._calibration_coefficients)
         return {"pressure": pres, "temperature": temp}
 

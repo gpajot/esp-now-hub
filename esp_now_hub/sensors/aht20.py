@@ -38,6 +38,8 @@ class AHT20:
         data = self._i2c.readfrom(self._address, 6)
         h = data[1] << 12 | data[2] << 4 | data[3] >> 4
         t = (data[3] & 0x0F) << 16 | data[4] << 8 | data[5]
+        if not h or not t:
+            raise ValueError("could not fetch value from sensor")
         return {
             "humidity": int(round(h / 2**20 * 100, 0)),
             "temperature": round(t / 2**20 * 200 - 50, 1),

@@ -3,6 +3,7 @@ set -o errexit
 
 rm -rf data
 mkdir data
+trap "rm -rf data" EXIT
 
 if test "$1" = 'hub'; then
   echo "setting up hub..."
@@ -40,5 +41,3 @@ fi
 mpy-cross -o data/config.mpy config.py
 
 mpremote cp -r data/* :.
-
-rm -rf data
