@@ -20,19 +20,29 @@ def process_sensor_data(sensor_id, data, send_configs):
             or round(abs(value - last_value), 10) >= send_config["diff"]
             or time.ticks_diff(time.ticks_ms(), last_time) >= send_config["time"] * 1000  # type: ignore[attr-defined]
         ):
-            _set(nvs, prop, value)
             data_to_send[prop] = value
 
     return data_to_send
 
 
+def store_sensor_data(sensor_id, data, send_configs):
+    if not send_configs:
+        return
+    nvs = esp32.NVS(sensor_id)
+    for prop, value in data.items():
+        send_config = send_configs.get(prop)
+        if not send_config:
+            continue
+        _set(nvs, prop, value)
+
+
 def _get(nvs, prop):
-    buf = bytearray()
+    buf = bytearray(100)
     try:
         nvs.get_blob(prop, buf)
     except OSError:
         return None, None
-    val, tm = buf.decode("utf-8").split(",")
+    val, tm = buf.replace(b"\x00", b"").decode("utf-8").split(",")
     return float(val), int(tm)
 
 

@@ -136,7 +136,7 @@ class MQTTClient:
                 {"topic": status_topic},
                 {"topic": self._status_topic},
             ]
-            for sensor_id, components in device["components"]:
+            for sensor_id, components in device["components"].items():
                 for component in components:
                     self._publish(
                         f"{self._topic_prefix}/sensor/{device_id}/{sensor_id}-{component}/config",

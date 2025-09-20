@@ -18,7 +18,7 @@ _READ_WORD2_CMD = const(b"\x1d\x60")  # 111 010110 000 0
 _READ_WORD3_CMD = const(b"\x1d\x90")  # 111 011001 000 0
 _READ_WORD4_CMD = const(b"\x1d\xa0")  # 111 011010 000 0
 _RESET_CMD = const(b"\x15\x55\x40")  # 101010101010101000000
-_CALIB_CACHE = const("ms5540c-calibration.txt")
+_CALIB_CACHE = const("calibration")
 
 
 class MS5540C:
@@ -68,9 +68,11 @@ class MS5540C:
     def _get_calibration_coefficients(self, namespace):
         nvs = esp32.NVS(namespace)
         try:
-            buf = bytearray()
+            buf = bytearray(100)
             nvs.get_blob(_CALIB_CACHE, buf)
-            return tuple(map(int, buf.decode("utf-8").strip().split(",")))
+            return tuple(
+                map(int, buf.replace(b"\x00", b"").decode("utf-8").strip().split(","))
+            )
         except OSError:
             pass
         self._write(_RESET_CMD)
@@ -91,6 +93,8 @@ class MS5540C:
         self._write(_RESET_CMD)
         d1 = self._get_measure(_MEASURE_PRES_CMD)
         d2 = self._get_measure(_MEASURE_TEMP_CMD)
+        if not d1 or not d2:
+            raise ValueError("could not fetch value from sensor")
         pres, temp = _compute(d1, d2, *self._calibration_coefficients)
         self.deinit()
         return {"pressure": pres, "temperature": temp}

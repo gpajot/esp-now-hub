@@ -63,9 +63,11 @@ class BMP280:
     def _get_calibration_coefficients(self, namespace):
         nvs = esp32.NVS(namespace)
         try:
-            buf = bytearray()
+            buf = bytearray(100)
             nvs.get_blob(_CALIB_CACHE, buf)
-            return tuple(map(int, buf.decode("utf-8").strip().split(",")))
+            return tuple(
+                map(int, buf.replace(b"\x00", b"").decode("utf-8").strip().split(","))
+            )
         except OSError:
             pass
         data = self._i2c.readfrom_mem(
@@ -91,6 +93,8 @@ class BMP280:
         data = self._i2c.readfrom_mem(self._address, _MEASURE_REG, 6)
         p = (data[0] << 16 | data[1] << 8 | data[2]) >> 4
         t = (data[3] << 16 | data[4] << 8 | data[5]) >> 4
+        if not p or not t:
+            raise ValueError("could not fetch value from sensor")
         pres, temp = _compute(t, p, *self._calibration_coefficients)
         return {"pressure": pres, "temperature": temp}
 

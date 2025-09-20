@@ -4,8 +4,8 @@ def setup_sensors(config, initialize):
     for cfg in config["sensors"]:
         sensor_id = cfg["id"]
         sensor_type = cfg["type"]
-        send_configs[sensor_id] = cfg.get("send_config") or {}
-        kw = {k: v for k, v in cfg.items() if k not in {"id", "type", "send_config"}}
+        send_configs[sensor_id] = cfg.get("send_configs") or {}
+        kw = {k: v for k, v in cfg.items() if k not in {"id", "type", "send_configs"}}
         if sensor_type == "MS5540C":
             from ms5540c import MS5540C
 
