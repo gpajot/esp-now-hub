@@ -4,6 +4,12 @@
 
 ESP-NOW proxy to gather data collected by sensors and send them to MQTT.
 
+Compatible with [MQTT Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery).
+
+I had a lot of WI-FI connection issues coming out of deepsleep, hence this project.
+The sensor devices will send data through ESP-Now to the hub, which will act as a proxy to MQTT.
+One of the advantages is that [it consumes much less energy than connecting to WI-FI](https://github.com/glenn20/upy-esp32-experiments), making it better for battery operated devices.
+
 ## Setup
 1. Run `uv sync`
 2. Copy [umqtt.simple](https://github.com/micropython/micropython-lib/blob/master/micropython/umqtt.simple/umqtt/simple.py) into `esp_now_hub/hub/umqtt/simple.py`.
@@ -23,53 +29,23 @@ A device is either a sensor or the hub. A test mode is available to display real
 > For test mode run `mpremote exec "import main"` to see sensor output.
 
 ### Hub config
-```python
-CONFIG = {
-  "topic_prefix": "esp-now-hub",
-  "primary_master_key": "...",
-  "wifi": {
-    "ssid":  "...",
-    "password": "...",
-  },
-  "mqtt": {
-    "server": "192.168.1.X",
-    "port": 1883,
-    "user": "...",
-    "password": "...",
-    "keepalive": 60,
-  },
-  "devices": [
-    {
-      "address": "00:00:00:00:00:00",
-      "local_master_key": "...",
-      "name": "Device",
-    },
-  ],
-}
-```
+
+See [configuration definition](esp_now_hub/hub/config.py).
+
 > [!NOTE]
 > Remove MQTT `user` and `password` if not using them.
 
 ### Sensor config
-```python
-CONFIG = {
-  "deepsleep": True,
-  "interval": 300,
-  "wifi_channel": 6,
-  "hub_address": "00:00:00:00:00:00",
-  "primary_master_key": "...",
-  "local_master_key": "...",
-  "sensors": [
-    {
-      "id": "...",
-    },
-  ],
-}
-```
+
+See [configuration definition](esp_now_hub/sensors/config.py).
+
 > [!NOTE]
-> Check test config to view sensor types and arguments to supply.
+> Check below to view sensor types and arguments to supply.
 
 ### Test config
+
+Keep only the sensors used on the device to test.
+
 ```python
 CONFIG = {
   "interval": 2,
@@ -102,8 +78,8 @@ CONFIG = {
       "type": "MS5803",
       "scl": 9,
       "sda": 8,
-      "address": 0x77,
-      "pressure_resolution": 256,
+      "address": 0x76,
+      "pressure_resolution": 1024,
       "temperature_resolution": 256,
     },
   ],
