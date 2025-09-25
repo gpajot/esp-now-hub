@@ -1,7 +1,7 @@
 [project]
 name = "esp_now_hub"
-version = "0.1.0"
-description = "Control devices using ESP-NOW."
+version = "1.0.0"
+description = "Firmware for creating a network of devices sending data to MQTT, proxied through ESP-NOW."
 license = "MIT"
 readme = "README.md"
 requires-python = ">=3.13"
