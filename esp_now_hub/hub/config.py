@@ -24,6 +24,8 @@ class Device(TypedDict):
     name: str
     # Device will be put offline if nothing received in 1.5 * keepalive period.
     keepalive: int
+    # Send signal strength if below this value.
+    send_signal_strength_threshold: NotRequired[int]
     # sensor_id -> included components (temperature, pressure, etc...).
     components: dict[str, Collection[str]]
 
