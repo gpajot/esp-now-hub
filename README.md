@@ -32,9 +32,6 @@ A device is either a sensor or the hub. A test mode is available to display real
 
 See [configuration definition](esp_now_hub/hub/config.py).
 
-> [!NOTE]
-> Remove MQTT `user` and `password` if not using them.
-
 ### Sensor config
 
 See [configuration definition](esp_now_hub/sensors/config.py).

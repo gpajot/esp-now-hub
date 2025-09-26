@@ -52,5 +52,8 @@ class ESPNow:
                         for prop, datum in sensor_data.items():
                             if prop in components[sensor_id]:
                                 data[f"{sensor_id}_{prop}"] = datum
+                    peer_stats = self._esp_now.peers_table.get(address)
+                    if peer_stats:
+                        data["_signal"] = f"{peer_stats[0]}dBm"
                     return address.hex(), data
         return None, None
