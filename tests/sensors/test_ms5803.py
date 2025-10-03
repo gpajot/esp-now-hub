@@ -1,13 +1,6 @@
-import sys
-from unittest.mock import Mock
-
 import pytest
 
-sys.modules["esp32"] = Mock()
-sys.modules["machine"] = Mock()
-sys.modules["micropython"] = Mock()
-sys.modules["micropython"].const = lambda e: e  # type: ignore[attr-defined]
-from esp_now_hub.sensors.ms5803 import _compute  # noqa: E402
+from esp_now_hub.sensors.ms5803 import _compute
 
 
 @pytest.fixture(scope="session")

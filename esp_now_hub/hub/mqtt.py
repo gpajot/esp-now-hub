@@ -86,7 +86,7 @@ class MQTTClient:
         keepalive = self._client.keepalive * 1000
         now = time.ticks_ms()  # type: ignore[attr-defined]
         # Check if we need to ping.
-        next_ping = min(
+        next_ping = max(
             0,
             keepalive - time.ticks_diff(now, self._last_ping_tick),  # type: ignore[attr-defined]
         )
@@ -105,11 +105,11 @@ class MQTTClient:
         except OSError:
             self._reconnect()
         # Check if wee need to put some devices offline.
-        for device_id, keepalive in self._device_keepalive.items():
+        for device_id, dev_keepalive in self._device_keepalive.items():
             ticks = self._last_receive_ticks.get(device_id)
             if (
                 ticks is not None
-                and time.ticks_diff(time.ticks_ms(), ticks) > keepalive  # type: ignore[attr-defined]
+                and time.ticks_diff(time.ticks_ms(), ticks) > dev_keepalive  # type: ignore[attr-defined]
             ):
                 self._publish(
                     self._get_status_topic(device_id),
@@ -133,15 +133,15 @@ class MQTTClient:
                 "name": device["name"],
             }
             availability = [
-                {"topic": status_topic},
-                {"topic": self._status_topic},
+                {"topic": status_topic.decode("utf-8")},
+                {"topic": self._status_topic.decode("utf-8")},
             ]
             for sensor_id, components in device["components"].items():
                 for component in components:
                     self._publish(
                         f"{self._topic_prefix}/sensor/{device_id}/{sensor_id}-{component}/config",
                         {
-                            "state_topic": state_topic,
+                            "state_topic": state_topic.decode("utf-8"),
                             "value_template": "{{ value_json.%s_%s }}"
                             % (sensor_id, component),
                             "state_class": "measurement",
