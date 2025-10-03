@@ -59,6 +59,6 @@ class ESPNow:
                     # Send the signal strength if below threshold.
                     peer_stats = self._esp_now.peers_table.get(address)
                     if peer_stats and peer_stats[0] <= self._signal_thresholds[address]:
-                        data["_signal"] = f"{peer_stats[0]}dBm"
+                        data["_signal"] = peer_stats[0]
                     return address.hex(), data
         return None, None
