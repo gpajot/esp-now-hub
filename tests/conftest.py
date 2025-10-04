@@ -10,7 +10,6 @@ sys.modules["micropython"] = Mock()
 sys.modules["time"] = Mock()
 sys.modules["umqtt"] = Mock()
 sys.modules["umqtt.simple"] = Mock()
-sys.modules["umqtt"].simple = sys.modules["umqtt.simple"]  # type: ignore[attr-defined]
 
 
 @pytest.fixture
