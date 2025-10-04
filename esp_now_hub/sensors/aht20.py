@@ -44,3 +44,7 @@ class AHT20:
             "humidity": int(round(h / 2**20 * 100, 0)),
             "temperature": round(t / 2**20 * 200 - 50, 1),
         }
+
+
+def setup(sensor_id, initialize, **kwargs):
+    return AHT20(initialize=initialize, **kwargs).get_measure

@@ -107,3 +107,7 @@ def _compute(d1, d2, c1, c2, c3, c4, c5, c6):
     sens -= sens2
     p = ((d1 * sens) // 2**21 - off) // 2**15
     return round(p / 10000, 4), round(temp / 100, 1)
+
+
+def setup(sensor_id, initialize, **kwargs):
+    return MS5803(calibration_cache_namespace=sensor_id, **kwargs).get_measure

@@ -137,3 +137,7 @@ def _compute(d1, d2, c1, c2, c3, c4, c5, c6):
         round(p / 10000, 4),
         round(temp / 10, 1),
     )
+
+
+def setup(sensor_id, initialize, **kwargs):
+    return MS5540C(calibration_cache_namespace=sensor_id, **kwargs).get_measure

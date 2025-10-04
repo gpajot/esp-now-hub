@@ -49,7 +49,7 @@ CONFIG = {
   "sensors": [
     {
       "id": "...",
-      "type": "MS5540C",
+      "type": "ms5540c",
       "sclk": 36,
       "din": 35,
       "dout": 37,
@@ -57,7 +57,7 @@ CONFIG = {
     },
     {
       "id": "...",
-      "type": "BMP280",
+      "type": "bmp280",
       "scl": 9,
       "sda": 8,
       "address": 0x77,
@@ -65,14 +65,14 @@ CONFIG = {
     },
     {
       "id": "...",
-      "type": "AHT20",
+      "type": "aht20",
       "scl": 9,
       "sda": 8,
       "address": 0x38,
     },
     {
       "id": "...",
-      "type": "MS5803",
+      "type": "ms5803",
       "scl": 9,
       "sda": 8,
       "address": 0x76,
