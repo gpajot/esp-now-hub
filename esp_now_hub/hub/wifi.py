@@ -28,19 +28,22 @@ class WLan:
             if self._ifconfig:
                 self._wlan.ifconfig(self._ifconfig)
             self._wlan.connect(self._ssid, self._password)
-            while self._wlan.status() in {
+            i = 0
+            while i < 100 and self._wlan.status() in {
                 network.STAT_CONNECTING,
                 network.STAT_IDLE,
             }:
                 time.sleep(0.1)
+                i += 1
             if self._wlan.status() == network.STAT_GOT_IP and self._wlan.isconnected():
                 print("connected to wifi")
                 return self
+            self._disconnect()
             print(
-                f"could not connect to wifi! status: {STATUSES.get(self._wlan.status())}, wait for 30s"
+                f"could not connect to wifi! status: {STATUSES.get(self._wlan.status())}, wait for 10s"
             )
             self._disconnect()
-            machine.lightsleep(30000)
+            machine.lightsleep(10000)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._disconnect()

@@ -36,7 +36,12 @@ class MQTTClient:
         self._client.set_last_will(self._status_topic, b"offline", retain=True)
 
     def __enter__(self):
-        self._connect()
+        while True:
+            try:
+                self._connect()
+                break
+            except OSError:
+                time.sleep(1)
         self._send_discovery()
         return self
 
