@@ -25,16 +25,16 @@ else
   fi
   mpy-cross -o data/setup.mpy esp_now_hub/sensors/setup.py
   mpy-cross -o data/value_cache.mpy esp_now_hub/sensors/value_cache.py
-  if grep -q 'AHT20' config.py; then
+  if grep -q 'aht20' config.py; then
     mpy-cross -o data/aht20.mpy esp_now_hub/sensors/aht20.py
   fi
-  if grep -q 'BMP280' config.py; then
+  if grep -q 'bmp280' config.py; then
     mpy-cross -o data/bmp280.mpy esp_now_hub/sensors/bmp280.py
   fi
-  if grep -q 'MS5540C' config.py; then
+  if grep -q 'ms5540c' config.py; then
     mpy-cross -o data/ms5540c.mpy esp_now_hub/sensors/ms5540c.py
   fi
-  if grep -q 'MS5803' config.py; then
+  if grep -q 'ms5803' config.py; then
     mpy-cross -o data/ms5803.mpy esp_now_hub/sensors/ms5803.py
   fi
 fi

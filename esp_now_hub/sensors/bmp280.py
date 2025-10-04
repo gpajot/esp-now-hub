@@ -132,3 +132,11 @@ def _compute(
     var2 = p * dig_p8 / 32768
     p = p + (var1 + var2 + dig_p7) / 16
     return round(p / 100000, 4), round(t, 1)
+
+
+def setup(sensor_id, initialize, **kwargs):
+    return BMP280(
+        calibration_cache_namespace=sensor_id,
+        initialize=initialize,
+        **kwargs
+    ).get_measure  # fmt: skip
