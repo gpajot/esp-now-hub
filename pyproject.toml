@@ -18,7 +18,7 @@ dev = [
     "pytest-mock ==3.15.1",
     "ruff ==0.14.6",
     "mypy ==1.18.2",
-    "pre-commit ==4.4.0",
+    "pre-commit==4.5.0",
     "micropython-esp32-esp32_generic-stubs ==1.26.0.post1",
     "mpremote ==1.26.1",
     "esptool ==5.1.0",
