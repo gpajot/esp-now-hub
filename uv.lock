@@ -212,7 +212,7 @@ dev = [
 dev = [
     { name = "esptool", specifier = "==5.1.0" },
     { name = "micropython-esp32-esp32-generic-stubs", specifier = "==1.26.0.post1" },
-    { name = "mpremote", specifier = "==1.26.1" },
+    { name = "mpremote", specifier = "==1.27.0" },
     { name = "mpy-cross", specifier = "==1.26.1.post2" },
     { name = "mypy", specifier = "==1.19.0" },
     { name = "pre-commit", specifier = "==4.5.0" },
@@ -357,15 +357,15 @@ wheels = [
 
 [[package]]
 name = "mpremote"
-version = "1.26.1"
+version = "1.27.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "platformdirs" },
     { name = "pyserial" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9c/ff/e54b17cb43b1b81a4267de73079b964f4bccf7762039e7c3fb12db21294a/mpremote-1.26.1.tar.gz", hash = "sha256:61a39bf5af502e1ec56d1b28bf067766c3a0daea9d7487934cb472e378a12fe1", size = 31519, upload-time = "2025-09-11T04:30:29.019Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d2/1c/be7d96275379eca70af111a1d4711c77b1afa78f1782582f3ad082e2d228/mpremote-1.27.0.tar.gz", hash = "sha256:6bb75774648091dad6833af4f86c5bf6505f8d7aec211380f9e6996c01d23cb5", size = 31420, upload-time = "2025-12-09T14:51:55.587Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a2/6e/22be76beaafe24be49f26f8c8b7dfe06e2e5e67b810da1d62e1bf9d53c16/mpremote-1.26.1-py3-none-any.whl", hash = "sha256:39251644305be718c52bc5965315adc4ae824901750abf6a3fb63683234df05c", size = 36180, upload-time = "2025-09-11T04:30:27.336Z" },
+    { url = "https://files.pythonhosted.org/packages/58/bf/cb9a7f38015c0fec0295b2cd014b830561f224d264f2f303c2ec15d8ef2f/mpremote-1.27.0-py3-none-any.whl", hash = "sha256:11d134c69b21b487dae3d03eed54c8ccbf84c916c8732a3e069a97cae47be3d4", size = 36094, upload-time = "2025-12-09T14:51:53.759Z" },
 ]
 
 [[package]]
