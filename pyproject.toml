@@ -45,5 +45,5 @@ testpaths = ["tests"]
 build-backend = { module-name = "esp_now_hub", module-root = "" }
 
 [build-system]
-requires = ["uv_build>=0.8.15,<0.9"]
+requires = ["uv_build>=0.8.15,<0.10"]
 build-backend = "uv_build"
