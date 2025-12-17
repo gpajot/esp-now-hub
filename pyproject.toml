@@ -4,7 +4,7 @@ version = "1.0.1"
 description = "Firmware for creating a network of devices sending data to MQTT, proxied through ESP-NOW."
 license = "MIT"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 authors = [
     { name = "Gabriel Pajot", email = "gab@lescactus.eu" }
 ]
@@ -18,32 +18,31 @@ dev = [
     "pytest-mock ==3.15.1",
     "ruff==0.14.9",
     "mypy==1.19.1",
-    "pre-commit==4.5.0",
+    "pre-commit==4.5.1",
     "micropython-esp32-esp32_generic-stubs ==1.26.0.post1",
     "mpremote==1.27.0",
     "esptool ==5.1.0",
-    "mpy-cross ==1.26.1.post2",
+    "mpy-cross ==1.27.0.post2",
+    "ty ==0.0.2",
 ]
 
 [tool.ruff.lint]
-select = ["A", "B", "E", "F", "I", "PT"]
-ignore = ["E501"]
+select = ["A", "B", "E", "F", "I", "PT", "RUF", "UP"]
+ignore = ["E501", "RUF001"]
 per-file-ignores = { "__init__.py" = ["F401"] }
 
-[tool.mypy]
-check_untyped_defs = true
-ignore_missing_imports = true
-install_types = true
-non_interactive = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-
-[tool.pytest.ini_options]
+[tool.pytest]
 testpaths = ["tests"]
 
 [tool.uv]
 build-backend = { module-name = "esp_now_hub", module-root = "" }
 
+[tool.ty.rules]
+unused-ignore-comment = "warn"
+
+[tool.ty.terminal]
+error-on-warning = true
+
 [build-system]
-requires = ["uv_build>=0.8.15,<0.10"]
+requires = ["uv_build>=0.9.17,<0.10"]
 build-backend = "uv_build"

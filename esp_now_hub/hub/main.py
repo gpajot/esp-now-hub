@@ -2,10 +2,10 @@ import select
 import sys
 import time
 
-import esp_now
-import mqtt
-import wifi
-from config import CONFIG
+import esp_now  # ty: ignore[unresolved-import]
+import mqtt  # ty: ignore[unresolved-import]
+import wifi  # ty: ignore[unresolved-import]
+from config import CONFIG  # ty: ignore[unresolved-import]
 
 
 def run():
@@ -44,5 +44,5 @@ while True:
         run()
     except Exception as exc:
         print("error running hub:")
-        sys.print_exception(exc)  # type: ignore[attr-defined]
+        sys.print_exception(exc)  # ty: ignore[unresolved-attribute]
         time.sleep(CONFIG["interval"] / 10)

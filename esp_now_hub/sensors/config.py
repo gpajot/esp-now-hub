@@ -1,4 +1,5 @@
-from typing import Collection, NotRequired, TypedDict
+from collections.abc import Collection
+from typing import NotRequired, TypedDict
 
 
 class SendConfig(TypedDict):
