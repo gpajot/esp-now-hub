@@ -51,14 +51,14 @@ class MQTTClient:
         self._client.disconnect()
 
     def _get_status_topic(self, device_id):
-        return f"{self._topic_prefix}/status/{device_id}".encode("utf-8")
+        return f"{self._topic_prefix}/status/{device_id}".encode()
 
     def _get_state_topic(self, device_id):
-        return f"{self._topic_prefix}/get/{device_id}".encode("utf-8")
+        return f"{self._topic_prefix}/get/{device_id}".encode()
 
     def _connect(self, clean_session=True):
         self._client.connect(clean_session)
-        self._last_broker_tick = self._last_ping_tick = time.ticks_ms()  # type: ignore[attr-defined]
+        self._last_broker_tick = self._last_ping_tick = time.ticks_ms()  # ty: ignore[unresolved-attribute]
         self._client.publish(self._status_topic, b"online", retain=True)
         self._poll.register(self._client.sock, select.POLLIN)
         print("connected to MQTT")
@@ -85,28 +85,28 @@ class MQTTClient:
         elif event & select.POLLIN:
             # Consume messages.
             self._client.check_msg()
-            self._last_broker_tick = time.ticks_ms()  # type: ignore[attr-defined]
+            self._last_broker_tick = time.ticks_ms()  # ty: ignore[unresolved-attribute]
 
     def ping(self):
         keepalive = self._client.keepalive * 1000
-        now = time.ticks_ms()  # type: ignore[attr-defined]
+        now = time.ticks_ms()  # ty: ignore[unresolved-attribute]
         # Check if we need to ping.
         next_ping = max(
             0,
-            keepalive - time.ticks_diff(now, self._last_ping_tick),  # type: ignore[attr-defined]
+            keepalive - time.ticks_diff(now, self._last_ping_tick),  # ty: ignore[unresolved-attribute]
         )
         if next_ping > 0:
             return next_ping
         # Check last message received from broker (at least ping responses).
         if (
             self._last_broker_tick is not None
-            and time.ticks_diff(now, self._last_broker_tick) > keepalive  # type: ignore[attr-defined]
+            and time.ticks_diff(now, self._last_broker_tick) > keepalive  # ty: ignore[unresolved-attribute]
         ):
             self._reconnect()
         # Ping broker.
         try:
             self._client.ping()
-            self._last_ping_tick = time.ticks_ms()  # type: ignore[attr-defined]
+            self._last_ping_tick = time.ticks_ms()  # ty: ignore[unresolved-attribute]
         except OSError:
             self._reconnect()
         # Check if wee need to put some devices offline.
@@ -114,7 +114,7 @@ class MQTTClient:
             ticks = self._last_receive_ticks.get(device_id)
             if (
                 ticks is not None
-                and time.ticks_diff(time.ticks_ms(), ticks) > dev_keepalive  # type: ignore[attr-defined]
+                and time.ticks_diff(time.ticks_ms(), ticks) > dev_keepalive  # ty: ignore[unresolved-attribute]
             ):
                 self._publish(
                     self._get_status_topic(device_id),
@@ -147,7 +147,7 @@ class MQTTClient:
                         f"{self._topic_prefix}/sensor/{device_id}/{sensor_id}-{component}/config",
                         {
                             "state_topic": state_topic.decode("utf-8"),
-                            "value_template": "{{ value_json.%s_%s }}"
+                            "value_template": "{{ value_json.%s_%s }}"  # noqa: UP031
                             % (sensor_id, component),
                             "state_class": "measurement",
                             "device": device_discovery,
@@ -168,7 +168,7 @@ class MQTTClient:
     def send(self, device_id, data):
         if device_id not in self._last_receive_ticks:
             self._publish(self._get_status_topic(device_id), b"online", retain=True)
-        self._last_receive_ticks[device_id] = time.ticks_ms()  # type: ignore[attr-defined]
+        self._last_receive_ticks[device_id] = time.ticks_ms()  # ty: ignore[unresolved-attribute]
         if data:
             self._publish(self._get_state_topic(device_id), data, encode=True)
 

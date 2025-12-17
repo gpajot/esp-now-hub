@@ -18,7 +18,7 @@ def process_sensor_data(sensor_id, data, send_configs):
             last_value is None
             or last_time is None
             or round(abs(value - last_value), 10) >= send_config["diff"]
-            or time.ticks_diff(time.ticks_ms(), last_time) >= send_config["time"] * 1000  # type: ignore[attr-defined]
+            or time.ticks_diff(time.ticks_ms(), last_time) >= send_config["time"] * 1000  # ty: ignore[unresolved-attribute]
         ):
             data_to_send[prop] = value
 
@@ -47,5 +47,5 @@ def _get(nvs, prop):
 
 
 def _set(nvs, prop, value):
-    nvs.set_blob(prop, f"{value},{time.ticks_ms()}".encode("utf-8"))  # type: ignore[attr-defined]
+    nvs.set_blob(prop, f"{value},{time.ticks_ms()}".encode())  # ty: ignore[unresolved-attribute]
     nvs.commit()
