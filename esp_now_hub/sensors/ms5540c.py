@@ -38,7 +38,7 @@ class MS5540C:
             "freq": _MCLK_FREQ,
             "duty_u16": 32768,
         }
-        self._pwm = machine.PWM(machine.Pin(mclk), **self._pwm_params)
+        self._pwm = machine.PWM(machine.Pin(mclk), **self._pwm_params)  # ty: ignore[invalid-argument-type]
         self._calibration_coefficients = self._get_calibration_coefficients(
             calibration_cache_namespace
         )
@@ -89,7 +89,7 @@ class MS5540C:
 
     def get_measure(self):
         """Return pressure (bar), temperature (Celsius)."""
-        self._pwm.init(**self._pwm_params)
+        self._pwm.init(**self._pwm_params)  # ty: ignore[invalid-argument-type]
         self._write(_RESET_CMD)
         d1 = self._get_measure(_MEASURE_PRES_CMD)
         d2 = self._get_measure(_MEASURE_TEMP_CMD)
