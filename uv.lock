@@ -1,6 +1,10 @@
 version = 1
 revision = 3
 requires-python = ">=3.14"
+resolution-markers = [
+    "platform_machine == 'x86_64' and sys_platform == 'darwin'",
+    "platform_machine != 'x86_64' or sys_platform != 'darwin'",
+]
 
 [[package]]
 name = "bitarray"
@@ -196,7 +200,7 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "esptool", specifier = "==5.3.0" },
+    { name = "esptool", specifier = "==5.3.1" },
     { name = "micropython-esp32-esp32-generic-stubs", specifier = "==1.28.0.post4" },
     { name = "mpremote", specifier = "==1.28.0" },
     { name = "mpy-cross", specifier = "==1.27.0.post2" },
@@ -209,7 +213,7 @@ dev = [
 
 [[package]]
 name = "esptool"
-version = "5.3.0"
+version = "5.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "bitstring" },
@@ -221,7 +225,7 @@ dependencies = [
     { name = "reedsolo" },
     { name = "rich-click" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/82/ca/aa2a6aafe214b3338eb56c5dc941e7e83a0f9e8b9bd05ac91b5d1a6ee9c9/esptool-5.3.0.tar.gz", hash = "sha256:0a077cb3ee8e60e223882c06ab7dae9b3686816c2547904d7472a42e6284e7de", size = 487446, upload-time = "2026-06-01T15:21:45.662Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/76/ac/d2016cf6b3709d0e0166f45f84bc6e2d717757b5f59020ccb34de08d1b9b/esptool-5.3.1.tar.gz", hash = "sha256:125781f36e6a2d08c484524a45f340694675368b5eeead9d0cb21b2034a91d98", size = 488230, upload-time = "2026-06-29T06:34:33.823Z" }
 
 [[package]]
 name = "filelock"
