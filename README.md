@@ -45,41 +45,41 @@ Keep only the sensors used on the device to test.
 
 ```python
 CONFIG = {
-  "interval": 2,
-  "sensors": [
-    {
-      "id": "...",
-      "type": "ms5540c",
-      "sclk": 36,
-      "din": 35,
-      "dout": 37,
-      "mclk": 38,
-    },
-    {
-      "id": "...",
-      "type": "bmp280",
-      "scl": 9,
-      "sda": 8,
-      "address": 0x77,
-      "mode": "ultra-low-power",
-    },
-    {
-      "id": "...",
-      "type": "aht20",
-      "scl": 9,
-      "sda": 8,
-      "address": 0x38,
-    },
-    {
-      "id": "...",
-      "type": "ms5803",
-      "scl": 9,
-      "sda": 8,
-      "address": 0x76,
-      "pressure_resolution": 1024,
-      "temperature_resolution": 256,
-    },
-  ],
+    "interval": 2,
+    "sensors": [
+        {
+            "id": "...",
+            "type": "ms5540c",
+            "sclk": 36,
+            "din": 35,
+            "dout": 37,
+            "mclk": 38,
+        },
+        {
+            "id": "...",
+            "type": "bmp280",
+            "scl": 9,
+            "sda": 8,
+            "address": 0x77,
+            "mode": "ultra-low-power",
+        },
+        {
+            "id": "...",
+            "type": "aht20",
+            "scl": 9,
+            "sda": 8,
+            "address": 0x38,
+        },
+        {
+            "id": "...",
+            "type": "ms5803",
+            "scl": 9,
+            "sda": 8,
+            "address": 0x76,
+            "pressure_resolution": 1024,
+            "temperature_resolution": 256,
+        },
+    ],
 }
 ```
 
