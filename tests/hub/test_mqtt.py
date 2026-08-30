@@ -69,7 +69,7 @@ def test_ping_wait(client, mqtt_client, ticks_ms):
     mqtt_client.keepalive = 10
     with client:
         ticks_ms.return_value = 2000
-        assert client.ping() == 9000
+        assert client.ping() == 8000
 
 
 def test_ping_reconnect(client, mqtt_client, ticks_ms):

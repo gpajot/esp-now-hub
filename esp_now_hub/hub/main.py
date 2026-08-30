@@ -25,9 +25,9 @@ def run():
                 CONFIG.get("primary_master_key"),
             ) as esp_now_client:
                 print("waiting for messages...")
-                next_ping = interval * 1000
+                next_ping = mqtt_client.ping()
                 while True:
-                    for event in poll.poll(next_ping):
+                    for event in poll.poll(int(next_ping)):
                         if mqtt_client.wants(event[0]):
                             mqtt_client.receive(event[1])
                         elif esp_now_client.wants(event[0]):
