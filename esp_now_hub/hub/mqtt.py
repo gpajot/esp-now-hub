@@ -20,6 +20,7 @@ class MQTTClient:
         self._poll = poll
         self._topic_prefix = topic_prefix
         self._devices = devices
+        self._broker_keepalive = keepalive * 1000
         self._device_keepalive = {}
         self._last_receive_ticks = {}
         self._last_broker_tick = None
@@ -88,19 +89,19 @@ class MQTTClient:
             self._last_broker_tick = time.ticks_ms()  # ty: ignore[unresolved-attribute]
 
     def ping(self):
-        keepalive = self._client.keepalive * 1000
         now = time.ticks_ms()  # ty: ignore[unresolved-attribute]
         # Check if we need to ping.
         next_ping = max(
             0,
-            keepalive - time.ticks_diff(now, self._last_ping_tick),  # ty: ignore[unresolved-attribute]
+            self._broker_keepalive * 0.9 - time.ticks_diff(now, self._last_ping_tick),  # ty: ignore[unresolved-attribute]
         )
         if next_ping > 0:
             return next_ping
         # Check last message received from broker (at least ping responses).
         if (
             self._last_broker_tick is not None
-            and time.ticks_diff(now, self._last_broker_tick) > keepalive  # ty: ignore[unresolved-attribute]
+            and time.ticks_diff(now, self._last_broker_tick)  # ty: ignore[unresolved-attribute]
+            > self._broker_keepalive
         ):
             self._reconnect()
         # Ping broker.
@@ -122,7 +123,7 @@ class MQTTClient:
                     retain=True,
                 )
                 del self._last_receive_ticks[device_id]
-        return keepalive
+        return self._broker_keepalive
 
     def _send_discovery(self):
         for device in self._devices:
