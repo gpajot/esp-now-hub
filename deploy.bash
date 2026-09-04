@@ -37,6 +37,9 @@ else
   if grep -q 'ms5803' config.py; then
     mpy-cross -o data/ms5803.mpy esp_now_hub/sensors/ms5803.py
   fi
+  if grep -q 'ntc_thermistor' config.py; then
+    mpy-cross -o data/ntc_thermistor.mpy esp_now_hub/sensors/ntc_thermistor.py
+  fi
 fi
 mpy-cross -o data/config.mpy config.py
 

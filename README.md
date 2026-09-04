@@ -6,20 +6,26 @@ ESP-NOW proxy to gather data collected by sensors and send them to MQTT.
 
 Compatible with [MQTT Discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery).
 
-I had a lot of WI-FI connection issues coming out of deepsleep, hence this project.
-The sensor devices will send data through ESP-Now to the hub, which will act as a proxy to MQTT.
-One of the advantages is that [it consumes much less energy than connecting to WI-FI](https://github.com/glenn20/upy-esp32-experiments), making it better for battery operated devices.
+I had a lot of WI-FI connection issues coming out of deepsleep, hence this project. The sensor devices will send data
+through ESP-Now to the hub, which will act as a proxy to MQTT. One of the advantages is
+that [it consumes much less energy than connecting to WI-FI](https://github.com/glenn20/upy-esp32-experiments), making
+it better for battery operated devices.
 
 ## Setup
+
 1. Run `uv sync`
-2. Copy [umqtt.simple](https://github.com/micropython/micropython-lib/blob/master/micropython/umqtt.simple/umqtt/simple.py) into `esp_now_hub/hub/umqtt/simple.py`.
+2.
+
+Copy [umqtt.simple](https://github.com/micropython/micropython-lib/blob/master/micropython/umqtt.simple/umqtt/simple.py)
+into `esp_now_hub/hub/umqtt/simple.py`.
 
 ## Flash a device
+
 A device is either a sensor or the hub. A test mode is available to display real time sensor data.
 
 1. Set up `config.py` (see below for structure) in root project folder.
-2. Flash the device with micropython firmware: `python -m esptool write-flash --erase-all 0x1000 $FIRMWARE_PATH`. 
-3. Deploy the code to the device: `./deploy.bash hub|sensor|test`. 
+2. Flash the device with micropython firmware: `python -m esptool write-flash --erase-all 0x1000 $FIRMWARE_PATH`.
+3. Deploy the code to the device: `./deploy.bash hub|sensor|test`.
 
 > [!NOTE]
 > If using ESPNow encryption, generate keys with `openssl rand -hex 8`.
@@ -78,6 +84,17 @@ CONFIG = {
             "address": 0x76,
             "pressure_resolution": 1024,
             "temperature_resolution": 256,
+        },
+        {
+            "id": "...",
+            "type": "ntc_thermistor",
+            "adc_pin": 9,
+            "vcc_pin": 8,
+            "beta": 3950,
+            "vcc": 3.3,
+            "resistance_ntc": 10000,
+            "resistance_divider": 10000,
+            "adc_attenuation": 11,
         },
     ],
 }
