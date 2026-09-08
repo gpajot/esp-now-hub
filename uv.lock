@@ -224,7 +224,7 @@ dev = [
 [package.metadata.requires-dev]
 dev = [
     { name = "esptool", specifier = "==5.3.1" },
-    { name = "micropython-esp32-esp32-generic-stubs", specifier = "==1.28.0.post4" },
+    { name = "micropython-esp32-esp32-generic-stubs", specifier = "==1.29.0.post1" },
     { name = "mpremote", specifier = "==1.29.0" },
     { name = "mpy-cross", specifier = "==1.29.0.post2" },
     { name = "pre-commit", specifier = "==4.6.2" },
@@ -309,22 +309,22 @@ wheels = [
 
 [[package]]
 name = "micropython-esp32-esp32-generic-stubs"
-version = "1.28.0.post4"
+version = "1.29.0.post1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "micropython-stdlib-stubs" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8b/77/9933fd36b61cae2d78bedae5a01b52d1b16b1ae8f468c57d112492384a52/micropython_esp32_esp32_generic_stubs-1.28.0.post4.tar.gz", hash = "sha256:641e93cb3a5bc5dd08d3844d21c065535e725891b4ce49f03563949820a42a8c", size = 101386, upload-time = "2026-05-20T12:33:07.589Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/84/8f/2b732568a0a80331393aa114a088fcd6dda03716dd7dcefd5f7149a91436/micropython_esp32_esp32_generic_stubs-1.29.0.post1.tar.gz", hash = "sha256:31cd07cae3108e2eb92731d981e442ebf22e3ab7f27e176af20be8e3e3fee16f", size = 105722, upload-time = "2026-08-30T14:50:49.918Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/46/80/7f588fed3912d3af4fcae35fb2fd43fb7211c3404b6dd3c419aef7074a6f/micropython_esp32_esp32_generic_stubs-1.28.0.post4-py2.py3-none-any.whl", hash = "sha256:287bbc3e50c25b23f54d9a4e58e57a7e6623958d9f01a6d9c8856112b2d19769", size = 126557, upload-time = "2026-05-20T12:33:09.075Z" },
+    { url = "https://files.pythonhosted.org/packages/25/7c/dde5c29c357468f7050f2749dd914d93b3bdc535fddb320da5ef6ceb1b49/micropython_esp32_esp32_generic_stubs-1.29.0.post1-py2.py3-none-any.whl", hash = "sha256:c12f4e27a5b11f01dbbad89ec9599cd788b4f8374fa8decf4b1c28a86983c55a", size = 134567, upload-time = "2026-08-30T14:50:50.983Z" },
 ]
 
 [[package]]
 name = "micropython-stdlib-stubs"
-version = "1.28.0.post6"
+version = "1.29.0.post2"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cd/e3/4edfda3791ea58edb220e319e9be9511545aa4c02e280bbe087c21c36038/micropython_stdlib_stubs-1.28.0.post6-py3-none-any.whl", hash = "sha256:b0a707f852365f03792b23964b48a0304cbb18eecc1b743e0d5b96712b775909", size = 150306, upload-time = "2026-07-19T21:10:22.02Z" },
+    { url = "https://files.pythonhosted.org/packages/3a/e6/3edc7601ecbfb1deaee29e7e8beadb7e2d4877b5ed4f71f0c6644bb7493d/micropython_stdlib_stubs-1.29.0.post2-py3-none-any.whl", hash = "sha256:bdcd54d9896d8e1d455b3a99995d82a8399e1e2c9cb94eacabe278e5c2397783", size = 154274, upload-time = "2026-08-31T11:34:33.329Z" },
 ]
 
 [[package]]
