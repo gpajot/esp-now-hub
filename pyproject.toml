@@ -22,7 +22,7 @@ dev = [
     "mpremote==1.29.0",
     "esptool==5.4.0",
     "mpy-cross==1.29.0.post2",
-    "ty==0.0.80",
+    "ty==0.0.82",
 ]
 
 [tool.ruff.lint]
