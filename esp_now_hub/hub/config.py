@@ -1,4 +1,3 @@
-from collections.abc import Collection
 from typing import NotRequired, TypedDict
 
 
@@ -28,7 +27,7 @@ class Device(TypedDict):
     # Send signal strength if below this value.
     send_signal_strength_threshold: NotRequired[int]
     # sensor_id -> included components (temperature, pressure, etc...).
-    components: dict[str, Collection[str]]
+    components: dict[str, list[str]]
 
 
 class Config(TypedDict):
@@ -38,7 +37,7 @@ class Config(TypedDict):
     interval: int
     wifi: Wifi
     mqtt: MQTT
-    devices: Collection[Device]
+    devices: list[Device]
 
 
 CONFIG: Config

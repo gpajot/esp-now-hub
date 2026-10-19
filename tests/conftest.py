@@ -8,8 +8,6 @@ sys.modules["espnow"] = Mock()
 sys.modules["machine"] = Mock()
 sys.modules["micropython"] = Mock()
 sys.modules["micropython"].const = lambda e: e
-sys.modules["time"] = Mock()
-sys.modules["time"].ticks_diff = lambda a, b: a - b
 sys.modules["umqtt"] = Mock()
 sys.modules["umqtt.simple"] = Mock()
 
@@ -22,5 +20,5 @@ def nvs(mocker):
 
 
 @pytest.fixture
-def ticks_ms(mocker):
-    return mocker.patch.object(sys.modules["time"], "ticks_ms")
+def time_mock(mocker):
+    return mocker.patch.object(sys.modules["time"], "time")

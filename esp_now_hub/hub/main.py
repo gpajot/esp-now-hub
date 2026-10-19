@@ -3,12 +3,13 @@ import sys
 import time
 
 import esp_now  # ty: ignore[unresolved-import]
+import machine
 import mqtt  # ty: ignore[unresolved-import]
 import wifi  # ty: ignore[unresolved-import]
 from config import CONFIG  # ty: ignore[unresolved-import]
 
 
-def run():
+def run() -> None:
     interval = CONFIG["interval"]
     poll = select.poll()
     with wifi.WLan(**CONFIG["wifi"]):
@@ -27,7 +28,7 @@ def run():
                 print("waiting for messages...")
                 next_ping = mqtt_client.ping()
                 while True:
-                    for event in poll.poll(int(next_ping)):
+                    for event in poll.poll(next_ping):
                         if mqtt_client.wants(event[0]):
                             mqtt_client.receive(event[1])
                         elif esp_now_client.wants(event[0]):
@@ -45,4 +46,6 @@ while True:
     except Exception as exc:
         print("error running hub:")
         sys.print_exception(exc)  # ty: ignore[unresolved-attribute]
-        time.sleep(CONFIG["interval"] / 10)
+        # Wait for a quarter of interval.
+        time.sleep(CONFIG["interval"] / 4)
+        machine.reset()

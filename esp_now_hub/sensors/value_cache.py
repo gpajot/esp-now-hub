@@ -3,14 +3,20 @@ import time
 import esp32
 
 
-def process_sensor_data(sensor_id, data, send_configs):
+def process_sensor_data(
+    sensor_id: str,
+    data: dict[str, float],
+    send_configs: dict[str, dict[str, float]],
+    *,
+    ignore_stored_value: bool = False,
+) -> dict[str, float]:
     if not send_configs:
         return data
     nvs = esp32.NVS(sensor_id)
     data_to_send = {}
     for prop, value in data.items():
         send_config = send_configs.get(prop)
-        if not send_config:
+        if not send_config or ignore_stored_value:
             data_to_send[prop] = value
             continue
         last_value, last_time = _get(nvs, prop)
@@ -18,14 +24,15 @@ def process_sensor_data(sensor_id, data, send_configs):
             last_value is None
             or last_time is None
             or round(abs(value - last_value), 10) >= send_config["diff"]
-            or time.ticks_diff(time.ticks_ms(), last_time) >= send_config["time"] * 1000  # ty: ignore[unresolved-attribute]
+            or time.time() < last_time
+            or time.time() - last_time >= send_config["time"]
         ):
             data_to_send[prop] = value
 
     return data_to_send
 
 
-def store_sensor_data(sensor_id, data, send_configs):
+def store_sensor_data(sensor_id: str, data: dict[str, float], send_configs) -> None:
     if not send_configs:
         return
     nvs = esp32.NVS(sensor_id)
@@ -36,7 +43,7 @@ def store_sensor_data(sensor_id, data, send_configs):
         _set(nvs, prop, value)
 
 
-def _get(nvs, prop):
+def _get(nvs: esp32.NVS, prop: str) -> tuple[float | None, int | None]:
     buf = bytearray(100)
     try:
         nvs.get_blob(prop, buf)
@@ -46,6 +53,6 @@ def _get(nvs, prop):
     return float(val), int(tm)
 
 
-def _set(nvs, prop, value):
-    nvs.set_blob(prop, f"{value},{time.ticks_ms()}".encode())  # ty: ignore[unresolved-attribute]
+def _set(nvs: esp32.NVS, prop: str, value: float) -> None:
+    nvs.set_blob(prop, f"{value},{time.time()}".encode())
     nvs.commit()

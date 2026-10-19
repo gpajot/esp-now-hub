@@ -36,13 +36,13 @@ class NTCThermistor:
 
     def __init__(
         self,
-        adc_pin,
-        vcc_pin=None,
-        beta=3590,
-        vcc=3.3,
-        resistance_ntc=10000,
-        resistance_divider=10000,
-        adc_attenuation=11,
+        adc_pin: int,
+        vcc_pin: int | None = None,
+        beta: int = 3590,
+        vcc: float = 3.3,
+        resistance_ntc: int = 10000,
+        resistance_divider: int = 10000,
+        adc_attenuation: float = 11,
     ):
         self._adc = machine.ADC(
             machine.Pin(adc_pin),
@@ -54,12 +54,12 @@ class NTCThermistor:
         self._resistance_ntc = resistance_ntc
         self._resistance_divider = resistance_divider
 
-    def _measure_one(self):
+    def _measure_one(self) -> float:
         rt = self._resistance_divider / (self._vcc / self._adc.read_uv() * 1e6 - 1)
         print(rt)
         return 1 / (1 / _T25 + math.log(rt / self._resistance_ntc) / self._beta) - _T0
 
-    def _measure(self):
+    def _measure(self) -> float:
         measures = []
         for _ in range(20):
             temp = self._measure_one()
@@ -71,7 +71,7 @@ class NTCThermistor:
             raise ValueError("could not measure temperature")
         return sum(measures) / len(measures)
 
-    def get_measure(self):
+    def get_measure(self) -> dict[str, float]:
         """Return temperature (Celsius)."""
         if self._vcc_pin is not None:
             self._vcc_pin.value(1)
@@ -84,5 +84,5 @@ class NTCThermistor:
         }
 
 
-def setup(sensor_id, initialize, **kwargs):
+def setup(sensor_id: str, initialize: bool, **kwargs):
     return NTCThermistor(**kwargs).get_measure

@@ -64,19 +64,19 @@ def test_receive(client, mqtt_client):
     mqtt_client.check_msg.assert_called_once()
 
 
-def test_ping_wait(client, mqtt_client, ticks_ms):
-    ticks_ms.return_value = 1000
+def test_ping_wait(client, mqtt_client, time_mock):
+    time_mock.return_value = 1000
     mqtt_client.keepalive = 10
     with client:
-        ticks_ms.return_value = 2000
+        time_mock.return_value = 2000
         assert client.ping() == 8000
 
 
-def test_ping_reconnect(client, mqtt_client, ticks_ms):
-    ticks_ms.return_value = 1000
+def test_ping_reconnect(client, mqtt_client, time_mock):
+    time_mock.return_value = 1000
     mqtt_client.keepalive = 10
     with client:
-        ticks_ms.return_value = 12000
+        time_mock.return_value = 12000
         mqtt_client.connect.reset_mock()
         mqtt_client.publish.reset_mock()
         assert client.ping() == 10000
@@ -86,12 +86,12 @@ def test_ping_reconnect(client, mqtt_client, ticks_ms):
     mqtt_client.connect.assert_called_once()
 
 
-def test_ping_devices(client, mqtt_client, ticks_ms):
-    ticks_ms.return_value = 1000
+def test_ping_devices(client, mqtt_client, time_mock):
+    time_mock.return_value = 1000
     mqtt_client.keepalive = 10
     with client:
-        ticks_ms.return_value = 12000
-        client._last_receive_ticks = {
+        time_mock.return_value = 12000
+        client._last_device_seen_times = {
             "000000000001": 1000,
         }
         mqtt_client.publish.reset_mock()
@@ -100,17 +100,17 @@ def test_ping_devices(client, mqtt_client, ticks_ms):
             call(b"topic/status/hub", b"online", retain=True),
             call(b"topic/status/000000000001", b"offline", retain=True),
         ]
-    assert client._last_receive_ticks == {}
+    assert client._last_device_seen_times == {}
 
 
-def test_send(client, mqtt_client, ticks_ms):
-    ticks_ms.return_value = 1000
+def test_send(client, mqtt_client, time_mock):
+    time_mock.return_value = 1000
     with client:
-        assert client._last_receive_ticks == {}
+        assert client._last_device_seen_times == {}
         mqtt_client.publish.reset_mock()
         client.send("000000000001", {"some": "data"})
         assert mqtt_client.publish.call_args_list == [
             call(b"topic/status/000000000001", b"online", retain=True),
             call(b"topic/get/000000000001", b'{"some": "data"}', retain=False),
         ]
-        assert client._last_receive_ticks == {"000000000001": 1000}
+        assert client._last_device_seen_times == {"000000000001": 1000}

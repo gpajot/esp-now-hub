@@ -9,7 +9,7 @@ from value_cache import (  # ty: ignore[unresolved-import]
 )
 
 
-def run():
+def run() -> None:
     data_getters, send_configs = setup_sensors(CONFIG, initialize=True)
     while True:
         for sensor_id, getter in data_getters.items():
@@ -27,5 +27,5 @@ while True:
     except Exception as exc:
         print("error running sensor:")
         sys.print_exception(exc)  # ty: ignore[unresolved-attribute]
-        # Wait for a 10th of an interval.
-        time.sleep(CONFIG["interval"] / 10)
+        # Wait for an interval.
+        time.sleep(CONFIG["interval"])

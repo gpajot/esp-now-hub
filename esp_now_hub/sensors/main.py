@@ -12,11 +12,14 @@ from value_cache import (  # ty: ignore[unresolved-import]
     store_sensor_data,
 )
 
+_first_run = machine.reset_cause() != machine.DEEPSLEEP_RESET
 
-def run():
+
+def run() -> None:
+    global _first_run
     data_getters, send_configs = setup_sensors(
         CONFIG,
-        initialize=machine.reset_cause() == machine.PWRON_RESET,
+        initialize=_first_run,
     )
 
     wlan = network.WLAN(network.WLAN.IF_STA)
@@ -37,7 +40,10 @@ def run():
                 data = {}
                 for sensor_id, getter in data_getters.items():
                     sensor_data = process_sensor_data(
-                        sensor_id, getter(), send_configs[sensor_id]
+                        sensor_id,
+                        getter(),
+                        send_configs[sensor_id],
+                        ignore_stored_value=_first_run,
                     )
                     if sensor_data:
                         data[sensor_id] = sensor_data
@@ -49,6 +55,7 @@ def run():
                 if CONFIG.get("deepsleep"):
                     break
                 else:
+                    _first_run = False
                     time.sleep(CONFIG["interval"])
         finally:
             e.active(False)
@@ -63,7 +70,6 @@ while True:
         run()
     except Exception as exc:
         print("error running sensor:", exc)
-        # Wait for a 10th of an interval.
-        if CONFIG.get("deepsleep"):
-            machine.deepsleep(int(CONFIG["interval"] * 1000 / 10))
-        time.sleep(CONFIG["interval"] / 10)
+        # Wait for an interval.
+        time.sleep(CONFIG["interval"])
+        machine.reset()

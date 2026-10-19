@@ -14,7 +14,12 @@ STATUSES = {
 
 
 class WLan:
-    def __init__(self, ssid, password, ifconfig):
+    def __init__(
+        self,
+        ssid: str,
+        password: str,
+        ifconfig: tuple[str, str, str, str] | None,
+    ):
         self._ssid = ssid
         self._password = password
         self._ifconfig = ifconfig
@@ -46,9 +51,11 @@ class WLan:
             machine.lightsleep(10000)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_val:
+            print("error in WiFi tear down:", exc_type, exc_val, exc_tb)
         self._disconnect()
 
-    def _disconnect(self):
+    def _disconnect(self) -> None:
         if self._wlan.isconnected():
             self._wlan.disconnect()
         self._wlan.active(False)

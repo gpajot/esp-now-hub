@@ -2,17 +2,32 @@ import binascii
 import json
 import select
 
+try:
+    from typing import TYPE_CHECKING
+except ImportError:
+    TYPE_CHECKING = False
+
 import espnow
+
+if TYPE_CHECKING:
+    from config import Device  # ty: ignore[unresolved-import]
+else:
+    Device = ...
 
 
 class ESPNow:
-    def __init__(self, poll, devices, pmk=None):
+    def __init__(
+        self,
+        poll: select.poll,
+        devices: list[Device],
+        pmk: str | None = None,
+    ):
         self._poll = poll
         self._devices = devices
         self._pmk = pmk
         self._esp_now = espnow.ESPNow()
-        self._included_components = {}
-        self._signal_thresholds = {}
+        self._included_components: dict[bytes, dict[str, list[str]]] = {}
+        self._signal_thresholds: dict[bytes, int] = {}
 
     def __enter__(self):
         self._esp_now.active(False)
@@ -33,13 +48,15 @@ class ESPNow:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_val:
+            print("error in ESPNow tear down:", exc_type, exc_val, exc_tb)
         self._poll.unregister(self._esp_now)
         self._esp_now.active(False)
 
-    def wants(self, obj):
+    def wants(self, obj) -> bool:
         return obj is self._esp_now
 
-    def receive(self, event):
+    def receive(self, event: int) -> tuple[str | None, dict[str, float] | None]:
         if event & select.POLLERR or event & select.POLLHUP:
             raise RuntimeError("error event received for ESP-Now")
         if event & select.POLLIN:

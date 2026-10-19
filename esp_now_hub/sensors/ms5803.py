@@ -13,6 +13,7 @@ _CONV_TIMES = [const(0.004), const(0.006), const(0.007), const(0.010), const(0.0
 _READ_MEASURE_CMD = const(b"\x00")
 _READ_CALIB_COEF_CMD = const(0xA2)
 _CALIB_CACHE = const("calibration")
+type CalibrationCoefficients = tuple[int, int, int, int, int, int]
 
 
 class MS5803:
@@ -22,12 +23,12 @@ class MS5803:
 
     def __init__(
         self,
-        calibration_cache_namespace,
-        scl,
-        sda,
-        address=0x76,
-        pressure_resolution=1024,
-        temperature_resolution=256,
+        calibration_cache_namespace: str,
+        scl: int,
+        sda: int,
+        address: int = 0x76,
+        pressure_resolution: int = 1024,
+        temperature_resolution: int = 256,
     ):
         self._i2c = machine.SoftI2C(scl=machine.Pin(scl), sda=machine.Pin(sda))
         self._address = address
@@ -37,14 +38,17 @@ class MS5803:
             calibration_cache_namespace
         )
 
-    def _get_calibration_coefficients(self, namespace):
+    def _get_calibration_coefficients(self, namespace: str) -> CalibrationCoefficients:
         nvs = esp32.NVS(namespace)
         try:
             buf = bytearray(100)
             nvs.get_blob(_CALIB_CACHE, buf)
             return tuple(
-                map(int, buf.replace(b"\x00", b"").decode("utf-8").strip().split(","))
-            )
+                map(
+                    int,
+                    buf.replace(b"\x00", b"").decode("utf-8").strip().split(","),
+                )
+            )  # ty: ignore[invalid-return-type]
         except OSError:
             pass
         coefficients = tuple(
@@ -55,19 +59,19 @@ class MS5803:
         )
         nvs.set_blob(_CALIB_CACHE, ",".join(map(str, coefficients)).encode("utf-8"))
         nvs.commit()
-        return coefficients
+        return coefficients  # ty: ignore[invalid-return-type]
 
-    def _get_calibration_coefficient(self, cmd):
+    def _get_calibration_coefficient(self, cmd: bytes) -> int:
         self._i2c.writeto(self._address, cmd)
         return int.from_bytes(self._i2c.readfrom(self._address, 2), "big")
 
-    def _get_measure(self, cmd, wait_time):
+    def _get_measure(self, cmd: bytes, wait_time: float) -> int:
         self._i2c.writeto(self._address, cmd)
         time.sleep(wait_time)
         self._i2c.writeto(self._address, _READ_MEASURE_CMD)
         return int.from_bytes(self._i2c.readfrom(self._address, 3), "big")
 
-    def get_measure(self):
+    def get_measure(self) -> dict[str, float]:
         """Return pressure (bar), temperature (Celsius)."""
         d1 = self._get_measure(
             (_MEASURE_PRES_CMD + 0x02 * self._p_res_idx).to_bytes(1),
@@ -83,7 +87,9 @@ class MS5803:
         return {"pressure": pres, "temperature": temp}
 
 
-def _compute(d1, d2, c1, c2, c3, c4, c5, c6):
+def _compute(
+    d1: int, d2: int, c1: int, c2: int, c3: int, c4: int, c5: int, c6: int
+) -> tuple[float, float]:
     # Temperature.
     dt = d2 - c5 * 2**8
     temp = 2000 + (dt * c6) // 2**23
@@ -109,5 +115,5 @@ def _compute(d1, d2, c1, c2, c3, c4, c5, c6):
     return round(p / 10000, 4), round(temp / 100, 1)
 
 
-def setup(sensor_id, initialize, **kwargs):
+def setup(sensor_id: str, initialize: bool, **kwargs):
     return MS5803(calibration_cache_namespace=sensor_id, **kwargs).get_measure
