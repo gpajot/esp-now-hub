@@ -5,13 +5,13 @@ import esp32
 import machine
 from micropython import const
 
-_MODES = [
+_MODES = (
     const("ultra-low-power"),
     const("low-power"),
     const("standard-resolution"),
     const("high-resolution"),
     const("ultra-high-resolution"),
-]
+)
 # 3 bits: standby duration, 3 bits: IIR filter time, 1 bit: nothing, 1 bit: spi
 _CONFIG_REG = const(0xF5)
 _CONFIG_VAL = const(b"\x00")  # 000 000 0 0
@@ -35,6 +35,9 @@ _CONV_TIMES = [
 _CALIB_REG = const(0x88)  # 24 bytes.
 _CALIB_STRUCT = const("<H2hH8h")  # dig_T1 -> dig_T3, dig_P1 -> dig_P9
 _CALIB_CACHE = const("calibration")
+type CalibrationCoefficients = tuple[
+    int, int, int, int, int, int, int, int, int, int, int, int
+]
 
 
 class BMP280:
@@ -44,12 +47,12 @@ class BMP280:
 
     def __init__(
         self,
-        calibration_cache_namespace,
-        scl,
-        sda,
-        address=0x77,
-        mode="ultra-low-power",
-        initialize=True,
+        calibration_cache_namespace: str,
+        scl: int,
+        sda: int,
+        address: int = 0x77,
+        mode: str = "ultra-low-power",
+        initialize: bool = True,
     ):
         self._i2c = machine.SoftI2C(scl=machine.Pin(scl), sda=machine.Pin(sda))
         self._address = address
@@ -60,14 +63,17 @@ class BMP280:
             calibration_cache_namespace
         )
 
-    def _get_calibration_coefficients(self, namespace):
+    def _get_calibration_coefficients(self, namespace: str) -> CalibrationCoefficients:
         nvs = esp32.NVS(namespace)
         try:
             buf = bytearray(100)
             nvs.get_blob(_CALIB_CACHE, buf)
             return tuple(
-                map(int, buf.replace(b"\x00", b"").decode("utf-8").strip().split(","))
-            )
+                map(
+                    int,
+                    buf.replace(b"\x00", b"").decode("utf-8").strip().split(","),
+                )
+            )  # ty: ignore[invalid-return-type]
         except OSError:
             pass
         data = self._i2c.readfrom_mem(
@@ -80,7 +86,7 @@ class BMP280:
         nvs.commit()
         return coefficients
 
-    def get_measure(self):
+    def get_measure(self) -> dict[str, float]:
         """Return pressure (bar), temperature (Celsius)."""
         # Set forced mode to trigger measure.
         self._i2c.writeto_mem(
@@ -100,21 +106,21 @@ class BMP280:
 
 
 def _compute(
-    adc_t,
-    adc_p,
-    dig_t1,
-    dig_t2,
-    dig_t3,
-    dig_p1,
-    dig_p2,
-    dig_p3,
-    dig_p4,
-    dig_p5,
-    dig_p6,
-    dig_p7,
-    dig_p8,
-    dig_p9,
-):
+    adc_t: int,
+    adc_p: int,
+    dig_t1: int,
+    dig_t2: int,
+    dig_t3: int,
+    dig_p1: int,
+    dig_p2: int,
+    dig_p3: int,
+    dig_p4: int,
+    dig_p5: int,
+    dig_p6: int,
+    dig_p7: int,
+    dig_p8: int,
+    dig_p9: int,
+) -> tuple[float, float]:
     # Temperature.
     var1 = (adc_t / 16384.0 - dig_t1 / 1024.0) * dig_t2
     var2 = (adc_t / 131072.0 - dig_t1 / 8192.0) ** 2 * dig_t3
@@ -134,7 +140,7 @@ def _compute(
     return round(p / 100000, 4), round(t, 1)
 
 
-def setup(sensor_id, initialize, **kwargs):
+def setup(sensor_id: str, initialize: bool, **kwargs):
     return BMP280(
         calibration_cache_namespace=sensor_id,
         initialize=initialize,

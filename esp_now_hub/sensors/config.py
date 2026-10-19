@@ -1,4 +1,3 @@
-from collections.abc import Collection
 from typing import NotRequired, TypedDict
 
 
@@ -6,13 +5,13 @@ class SendConfig(TypedDict):
     # Send if difference from current and last sent is greater or equal to this value.
     diff: float
     # Send if not sent since this number of seconds.
-    seconds: float
+    time: float
 
 
 class Sensor(TypedDict):
     id: str
     type: str
-    # Key is component (temperature, etc..)
+    # Key is component (temperature, etc...)
     send_configs: NotRequired[dict[str, SendConfig]]
     # Sensor kwargs should go here.
 
@@ -27,7 +26,7 @@ class Config(TypedDict):
     hub_address: str
     primary_master_key: NotRequired[str]
     local_master_key: NotRequired[str]
-    sensors: Collection[Sensor]
+    sensors: list[Sensor]
 
 
 CONFIG: Config

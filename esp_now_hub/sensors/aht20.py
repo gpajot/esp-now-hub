@@ -16,7 +16,13 @@ class AHT20:
     See https://asairsensors.com/wp-content/uploads/2021/09/Data-Sheet-AHT20-Humidity-and-Temperature-Sensor-ASAIR-V1.0.03.pdf
     """
 
-    def __init__(self, scl, sda, address=0x38, initialize=True):
+    def __init__(
+        self,
+        scl: int,
+        sda: int,
+        address: int = 0x38,
+        initialize: bool = True,
+    ):
         self._i2c = machine.SoftI2C(scl=machine.Pin(scl), sda=machine.Pin(sda))
         self._address = address
         if initialize:
@@ -25,11 +31,11 @@ class AHT20:
                 self._i2c.writeto(self._address, _INIT_CMD)
                 time.sleep(_INIT_TIME)
 
-    def _get_status(self):
+    def _get_status(self) -> int:
         self._i2c.writeto(self._address, _STATUS_CMD)
         return self._i2c.readfrom(self._address, 1)[0]
 
-    def get_measure(self):
+    def get_measure(self) -> dict[str, float]:
         """Return humidity (0-100), temperature (Celsius)."""
         self._i2c.writeto(self._address, _MEASURE_CMD)
         time.sleep(_MEASURE_TIME)
@@ -46,5 +52,5 @@ class AHT20:
         }
 
 
-def setup(sensor_id, initialize, **kwargs):
+def setup(sensor_id: str, initialize: bool, **kwargs):
     return AHT20(initialize=initialize, **kwargs).get_measure

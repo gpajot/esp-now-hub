@@ -24,9 +24,9 @@ def test_get(mocker):
     assert _get(nvs_, "prop") == (21.2, 3000)
 
 
-def test_set(mocker, ticks_ms):
+def test_set(mocker, time_mock):
     nvs_ = mocker.Mock()
-    ticks_ms.return_value = 3000
+    time_mock.return_value = 3000
     _set(nvs_, "prop", 21.2)
     nvs_.set_blob.assert_called_once_with("prop", b"21.2,3000")
     nvs_.commit.assert_called_once()
@@ -50,9 +50,9 @@ def test_process_sensor_data_no_cache(nvs_get):
     ) == {"temp": 21.2}
 
 
-def test_process_sensor_data_should_not_send(nvs_get, ticks_ms):
-    nvs_get.return_value = (21.2, 3000)
-    ticks_ms.return_value = 6000
+def test_process_sensor_data_should_not_send(nvs_get, time_mock):
+    nvs_get.return_value = (21.2, 3)
+    time_mock.return_value = 6
     assert (
         process_sensor_data(
             "id",
@@ -63,9 +63,20 @@ def test_process_sensor_data_should_not_send(nvs_get, ticks_ms):
     )
 
 
-def test_process_sensor_data_send_for_diff(nvs_get, ticks_ms):
-    nvs_get.return_value = (21.2, 3000)
-    ticks_ms.return_value = 6000
+def test_process_sensor_data_ignore(nvs_get, time_mock):
+    nvs_get.return_value = (21.2, 3)
+    time_mock.return_value = 6
+    assert process_sensor_data(
+        "id",
+        {"temp": 21.3},
+        {"temp": {"diff": 0.2, "time": 5}},
+        ignore_stored_value=True,
+    ) == {"temp": 21.3}
+
+
+def test_process_sensor_data_send_for_diff(nvs_get, time_mock):
+    nvs_get.return_value = (21.2, 3)
+    time_mock.return_value = 6
     assert process_sensor_data(
         "id",
         {"temp": 21.4},
@@ -73,9 +84,9 @@ def test_process_sensor_data_send_for_diff(nvs_get, ticks_ms):
     ) == {"temp": 21.4}
 
 
-def test_process_sensor_data_send_for_time(nvs_get, ticks_ms):
-    nvs_get.return_value = (21.2, 3000)
-    ticks_ms.return_value = 10000
+def test_process_sensor_data_send_for_time(nvs_get, time_mock):
+    nvs_get.return_value = (21.2, 3)
+    time_mock.return_value = 10
     assert process_sensor_data(
         "id",
         {"temp": 21.3},

@@ -1,4 +1,16 @@
-def setup_sensors(config, initialize):
+try:
+    from typing import TYPE_CHECKING
+except ImportError:
+    TYPE_CHECKING = False
+
+
+if TYPE_CHECKING:
+    from config import Config  # ty: ignore[unresolved-import]
+else:
+    Config = ...
+
+
+def setup_sensors(config: Config, *, initialize: bool):
     data_getters = {}
     send_configs = {}
     for cfg in config["sensors"]:
