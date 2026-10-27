@@ -56,7 +56,6 @@ class NTCThermistor:
 
     def _measure_one(self) -> float:
         rt = self._resistance_divider / (self._vcc / self._adc.read_uv() * 1e6 - 1)
-        print(rt)
         return 1 / (1 / _T25 + math.log(rt / self._resistance_ntc) / self._beta) - _T0
 
     def _measure(self) -> float:

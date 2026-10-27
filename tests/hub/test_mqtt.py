@@ -4,6 +4,7 @@ from unittest.mock import call
 import pytest
 import umqtt.simple
 
+from esp_now_hub.hub.config import Device
 from esp_now_hub.hub.mqtt import MQTTClient
 
 
@@ -26,26 +27,26 @@ def mqtt_client(mocker, mqtt_socket):
 
 
 @pytest.fixture
-def devices():
-    return (
+def devices() -> list[Device]:
+    return [
         {
             "address": "00:00:00:00:00:01",
-            "keepalive": 5,
             "name": "dev1",
-            "components": {"sensor1": {"pressure"}},
+            "keepalive": 5,
+            "components": {"sensor1": ["pressure"]},
         },
         {
             "address": "00:00:00:00:00:02",
-            "keepalive": 5,
             "name": "dev2",
-            "components": {"sensor2": {"temperature"}},
+            "keepalive": 5,
+            "components": {"sensor2": ["temperature"]},
         },
-    )
+    ]
 
 
 @pytest.fixture
 def client(poll, mqtt_client, devices):
-    return MQTTClient(poll, "topic", devices, 10, "host")
+    return MQTTClient(lambda *_: None, poll, "topic", devices, 10, "host")
 
 
 def test_setup(client, poll, mqtt_client, mqtt_socket):
@@ -66,38 +67,30 @@ def test_receive(client, mqtt_client):
 
 def test_ping_wait(client, mqtt_client, time_mock):
     time_mock.return_value = 1000
-    mqtt_client.keepalive = 10
     with client:
-        time_mock.return_value = 2000
-        assert client.ping() == 8000
+        time_mock.return_value = 1005
+        assert client.ping() == 4
 
 
-def test_ping_reconnect(client, mqtt_client, time_mock):
+def test_ping_ping(client, mqtt_client, time_mock):
     time_mock.return_value = 1000
-    mqtt_client.keepalive = 10
     with client:
-        time_mock.return_value = 12000
-        mqtt_client.connect.reset_mock()
-        mqtt_client.publish.reset_mock()
-        assert client.ping() == 10000
-        assert mqtt_client.publish.call_args_list == [
-            call(b"topic/status/hub", b"online", retain=True),
-        ]
-    mqtt_client.connect.assert_called_once()
+        time_mock.return_value = 1011
+        mqtt_client.ping.reset_mock()
+        assert client.ping() == 9
+        mqtt_client.ping.assert_called_once()
 
 
 def test_ping_devices(client, mqtt_client, time_mock):
     time_mock.return_value = 1000
-    mqtt_client.keepalive = 10
     with client:
-        time_mock.return_value = 12000
+        time_mock.return_value = 1008
         client._last_device_seen_times = {
             "000000000001": 1000,
         }
         mqtt_client.publish.reset_mock()
-        assert client.ping() == 10000
+        assert client.ping() == 1
         assert mqtt_client.publish.call_args_list == [
-            call(b"topic/status/hub", b"online", retain=True),
             call(b"topic/status/000000000001", b"offline", retain=True),
         ]
     assert client._last_device_seen_times == {}
