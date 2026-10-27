@@ -16,7 +16,7 @@ license-files = ["LICENSE"]
 dev = [
     "pytest==9.1.1",
     "pytest-mock==3.17.0",
-    "ruff==0.17.0",
+    "ruff==0.17.2",
     "pre-commit==4.7.0",
     "micropython-esp32-esp32_generic-stubs==1.29.0.post1",
     "mpremote==1.29.0",
