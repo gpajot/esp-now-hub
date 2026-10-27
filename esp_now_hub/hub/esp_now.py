@@ -10,7 +10,7 @@ except ImportError:
 import espnow
 
 if TYPE_CHECKING:
-    from config import Device  # ty: ignore[unresolved-import]
+    from .config import Device
 else:
     Device = ...
 
@@ -18,10 +18,12 @@ else:
 class ESPNow:
     def __init__(
         self,
+        debug,
         poll: select.poll,
         devices: list[Device],
         pmk: str | None = None,
     ):
+        self._debug = debug
         self._poll = poll
         self._devices = devices
         self._pmk = pmk
@@ -49,7 +51,8 @@ class ESPNow:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_val:
-            print("error in ESPNow tear down:", exc_type, exc_val, exc_tb)
+            self._debug("error in tear down:", exc_val)
+            self._debug(exc_tb)
         self._poll.unregister(self._esp_now)
         self._esp_now.active(False)
 
@@ -62,6 +65,7 @@ class ESPNow:
         if event & select.POLLIN:
             address, payload = self._esp_now.recv(0)
             if address and payload:
+                self._debug(f"got payload from {address}: {payload}")
                 components = self._included_components.get(address)
                 if components:
                     data = {}
@@ -78,4 +82,6 @@ class ESPNow:
                     if peer_stats and peer_stats[0] <= self._signal_thresholds[address]:
                         data["_signal"] = peer_stats[0]
                     return address.hex(), data
+            else:
+                self._debug("got empty payload")
         return None, None

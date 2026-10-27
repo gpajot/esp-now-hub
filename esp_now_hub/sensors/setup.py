@@ -5,7 +5,7 @@ except ImportError:
 
 
 if TYPE_CHECKING:
-    from config import Config  # ty: ignore[unresolved-import]
+    from .config import Config
 else:
     Config = ...
 

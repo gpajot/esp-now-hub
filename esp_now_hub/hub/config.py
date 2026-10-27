@@ -38,6 +38,7 @@ class Config(TypedDict):
     wifi: Wifi
     mqtt: MQTT
     devices: list[Device]
+    debug_to: NotRequired[str]
 
 
 CONFIG: Config

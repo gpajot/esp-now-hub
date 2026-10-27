@@ -1,12 +1,14 @@
 import sys
 import time
 
-from config import CONFIG  # ty: ignore[unresolved-import]
-from setup import setup_sensors  # ty: ignore[unresolved-import]
-from value_cache import (  # ty: ignore[unresolved-import]
-    process_sensor_data,
-    store_sensor_data,
-)
+try:
+    from .config import CONFIG
+    from .setup import setup_sensors
+    from .value_cache import process_sensor_data, store_sensor_data
+except ImportError:
+    from config import CONFIG  # ty: ignore[unresolved-import]
+    from setup import setup_sensors  # ty: ignore[unresolved-import]
+    from value_cache import process_sensor_data, store_sensor_data  # ty: ignore[unresolved-import]
 
 
 def run() -> None:

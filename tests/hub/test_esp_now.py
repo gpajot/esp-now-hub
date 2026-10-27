@@ -4,6 +4,7 @@ from unittest.mock import call
 import espnow
 import pytest
 
+from esp_now_hub.hub.config import Device
 from esp_now_hub.hub.esp_now import ESPNow
 
 
@@ -20,23 +21,27 @@ def esp_now(mocker):
 
 
 @pytest.fixture
-def devices():
-    return (
+def devices() -> list[Device]:
+    return [
         {
             "address": "00:00:00:00:00:01",
-            "components": {"sensor1": {"pressure"}},
+            "name": "1",
+            "keepalive": 0,
+            "components": {"sensor1": ["pressure"]},
             "send_signal_strength_threshold": -80,
         },
         {
             "address": "00:00:00:00:00:02",
-            "components": {"sensor2": {"temperature"}},
+            "name": "2",
+            "keepalive": 0,
+            "components": {"sensor2": ["temperature"]},
         },
-    )
+    ]
 
 
 @pytest.fixture
 def client(poll, esp_now, devices):
-    return ESPNow(poll, devices)
+    return ESPNow(lambda *_: None, poll, devices)
 
 
 def test_setup(poll, esp_now, client):

@@ -10,7 +10,7 @@ except ImportError:
 import umqtt.simple
 
 if TYPE_CHECKING:
-    from config import Device  # ty: ignore[unresolved-import]
+    from .config import Device
 else:
     Device = ...
 
@@ -18,6 +18,7 @@ else:
 class MQTTClient:
     def __init__(
         self,
+        debug,
         poll: select.poll,
         topic_prefix: str,
         devices: list[Device],
@@ -27,13 +28,13 @@ class MQTTClient:
         user: str | None = None,
         password: str | None = None,
     ):
+        self._debug = debug
         self._poll = poll
         self._topic_prefix = topic_prefix
         self._devices = devices
-        self._broker_keepalive = keepalive * 1000
-        self._device_keepalive: dict[str, int] = {}
+        self._broker_keepalive = keepalive
+        self._device_keepalive: dict[str, float] = {}
         self._last_device_seen_times: dict[str, float] = {}
-        self._last_broker_seen_time: float = 0
         self._last_ping_time: float = 0
         self._status_topic = self._get_status_topic("hub")
         self._client = umqtt.simple.MQTTClient(
@@ -58,7 +59,8 @@ class MQTTClient:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_val:
-            print("error in MQTT tear down:", exc_type, exc_val, exc_tb)
+            self._debug("error in tear down:", exc_type)
+            self._debug(exc_tb)
         self._poll.unregister(self._client.sock)
         self._client.publish(self._status_topic, b"offline", retain=True)
         self._client.disconnect()
@@ -69,25 +71,27 @@ class MQTTClient:
     def _get_state_topic(self, device_id: str) -> bytes:
         return f"{self._topic_prefix}/get/{device_id}".encode()
 
-    def _connect(self, clean_session: bool = True) -> None:
-        self._client.connect(clean_session)
-        self._last_broker_seen_time = self._last_ping_time = time.time()
+    def _connect(self) -> None:
+        self._client.connect()
+        self._last_ping_time = time.time()
         self._client.publish(self._status_topic, b"online", retain=True)
         self._poll.register(self._client.sock, select.POLLIN)
-        print("connected to MQTT")
+        self._debug("connected")
 
     def _reconnect(self, attempts: int | None = None) -> bool:
-        print("reconnecting MQTT")
+        self._debug("reconnecting")
         self._poll.unregister(self._client.sock)
         i = 0
         while attempts is None or i < attempts:
             if i:
                 time.sleep(min(i, 30))
             try:
-                self._connect(False)
+                self._connect()
                 return True
-            except OSError:
+            except OSError as exc:
+                self._debug("error trying to connect", exc)
                 i += 1
+        self._debug("stopping connection attempts")
         return False
 
     def wants(self, obj) -> bool:
@@ -95,54 +99,50 @@ class MQTTClient:
 
     def receive(self, event: int) -> None:
         if event & select.POLLERR or event & select.POLLHUP:
+            self._debug("error from poller")
             self._reconnect()
         elif event & select.POLLIN:
             # Consume messages.
             try:
                 self._client.check_msg()
-                self._last_broker_seen_time = time.time()
             except OSError:
-                print("received empty message from MQTT")
+                self._debug("received empty message")
                 self._reconnect()
 
-    def ping(self) -> int:
-        now = time.time()
-        # Check if we need to ping.
-        next_ping = max(
-            0,
-            int(self._broker_keepalive * 0.9 - (now - self._last_ping_time)),
-        )
-        if next_ping > 0:
-            return next_ping
-        # Check last message received from broker (at least ping responses).
-        if (
-            self._last_broker_seen_time is not None
-            and (now - self._last_broker_seen_time) > self._broker_keepalive
-        ):
-            self._reconnect()
-        # Ping broker.
-        try:
-            self._client.ping()
-            self._last_ping_time = time.time()
-        except OSError:
-            self._reconnect()
+    def ping(self) -> float:
         # Check if wee need to put some devices offline.
         for device_id, dev_keepalive in self._device_keepalive.items():
-            ticks = self._last_device_seen_times.get(device_id)
-            if ticks is not None and (time.time() - ticks) > dev_keepalive:
+            last_time = self._last_device_seen_times.get(device_id)
+            if last_time is not None and (time.time() - last_time) > dev_keepalive:
+                self._debug(f"device {device_id} offline")
                 self._publish(
                     self._get_status_topic(device_id),
                     b"offline",
                     retain=True,
                 )
                 del self._last_device_seen_times[device_id]
-        return self._broker_keepalive
+        # Check if we need to ping.
+        next_ping = max(
+            0,
+            self._broker_keepalive * 0.9 - (time.time() - self._last_ping_time),
+        )
+        if next_ping > 0:
+            self._debug(f"next ping in: {next_ping}s")
+            return next_ping
+        # Ping broker.
+        try:
+            self._debug("pinging broker")
+            self._client.ping()
+            self._last_ping_time = time.time()
+        except OSError:
+            self._reconnect()
+        return self._broker_keepalive * 0.9
 
     def _send_discovery(self) -> None:
         for device in self._devices:
             device_id = device["address"].replace(":", "")
-            # Store in ms and allow a bit more.
-            self._device_keepalive[device_id] = device["keepalive"] * 1500
+            # Allow a bit more.
+            self._device_keepalive[device_id] = device["keepalive"] * 1.5
             status_topic = self._get_status_topic(device_id)
             state_topic = self._get_state_topic(device_id)
             device_discovery = {
@@ -181,6 +181,7 @@ class MQTTClient:
 
     def send(self, device_id: str, data) -> None:
         if device_id not in self._last_device_seen_times:
+            self._debug(f"device {device_id} back online")
             self._publish(self._get_status_topic(device_id), b"online", retain=True)
         self._last_device_seen_times[device_id] = time.time()
         if data:
@@ -194,7 +195,7 @@ class MQTTClient:
         retain: bool = False,
         keep_trying: bool = False,
         encode: bool = False,
-    ) -> bool:
+    ) -> None:
         """Retry indefinitely if keep_trying or just once otherwise."""
         retried = False
         while True:
@@ -204,16 +205,18 @@ class MQTTClient:
                     json.dumps(data).encode("utf-8") if encode else data,
                     retain=retain,
                 )
-                return True
+                return
             except OSError:
                 if keep_trying:
                     self._reconnect()
                 elif retried:
-                    return False
+                    self._debug(f"did not publish message to topic {topic}: {data}")
+                    return
                 else:
                     retried = True
                     if not self._reconnect(1):
-                        return False
+                        self._debug(f"did not publish message to topic {topic}: {data}")
+                        return
 
 
 _UNITS = {
