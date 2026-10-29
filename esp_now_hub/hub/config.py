@@ -19,8 +19,6 @@ class Device(TypedDict):
     # Mac address, eg. 00:00:00:00:00:00
     address: str
     local_master_key: NotRequired[str]
-    manufacturer: NotRequired[str]
-    model: NotRequired[str]
     name: str
     # Device will be put offline if nothing received in 1.5 * keepalive period.
     keepalive: int

@@ -1,5 +1,6 @@
 import binascii
 import json
+import os
 import time
 
 import espnow
@@ -10,12 +11,19 @@ try:
     from .config import CONFIG
     from .setup import setup_sensors
     from .value_cache import process_sensor_data, store_sensor_data
+    from .version import VERSION
 except ImportError:
     from config import CONFIG  # ty: ignore[unresolved-import]
     from setup import setup_sensors  # ty: ignore[unresolved-import]
     from value_cache import process_sensor_data, store_sensor_data  # ty: ignore[unresolved-import]
+    from version import VERSION  # ty: ignore[unresolved-import]
 
 _first_run = machine.reset_cause() != machine.DEEPSLEEP_RESET
+_OS_STATS = os.uname()
+_VERSION_INFO = {
+    "sw": f"{VERSION} ({_OS_STATS.release})",
+    "mdl": _OS_STATS.sysname,
+}
 
 
 def run() -> None:
@@ -50,7 +58,7 @@ def run() -> None:
                     )
                     if sensor_data:
                         data[sensor_id] = sensor_data
-                if e.send(hub_address, json.dumps(data)):
+                if e.send(hub_address, json.dumps({**data, "d": _VERSION_INFO})):
                     for sensor_id, sensor_data in data.items():
                         store_sensor_data(
                             sensor_id, sensor_data, send_configs[sensor_id]
