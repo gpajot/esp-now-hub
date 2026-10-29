@@ -1,4 +1,5 @@
 import json
+import os
 import select
 import time
 
@@ -13,6 +14,12 @@ if TYPE_CHECKING:
     from .config import Device
 else:
     Device = ...
+try:
+    from .version import VERSION
+except ImportError:
+    from version import VERSION  # ty: ignore[unresolved-import]
+
+_VERSION_INFO = f"{VERSION} ({os.uname().release})"
 
 
 class MQTTClient:
@@ -31,7 +38,9 @@ class MQTTClient:
         self._debug = debug
         self._poll = poll
         self._topic_prefix = topic_prefix
-        self._devices = devices
+        self._devices: dict[str, Device] = {
+            d["address"].replace(":", ""): d for d in devices
+        }
         self._broker_keepalive = keepalive
         self._device_keepalive: dict[str, float] = {}
         self._last_device_seen_times: dict[str, float] = {}
@@ -46,6 +55,9 @@ class MQTTClient:
             keepalive=keepalive,
         )
         self._client.set_last_will(self._status_topic, b"offline", retain=True)
+        self._discovery_sent: dict[
+            str, dict[str, str]
+        ] = {}  # address -> extra device info
 
     def __enter__(self):
         while True:
@@ -54,7 +66,10 @@ class MQTTClient:
                 break
             except OSError:
                 time.sleep(1)
-        self._send_discovery()
+        for device_id, device in self._devices.items():
+            # Allow a bit more.
+            self._device_keepalive[device_id] = device["keepalive"] * 1.5
+            self._publish(self._get_status_topic(device_id), b"offline", retain=True)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -138,52 +153,57 @@ class MQTTClient:
             self._reconnect()
         return self._broker_keepalive * 0.9
 
-    def _send_discovery(self) -> None:
-        for device in self._devices:
-            device_id = device["address"].replace(":", "")
-            # Allow a bit more.
-            self._device_keepalive[device_id] = device["keepalive"] * 1.5
-            status_topic = self._get_status_topic(device_id)
-            state_topic = self._get_state_topic(device_id)
-            device_discovery = {
-                "identifiers": [f"{self._topic_prefix}-{device_id}"],
-                "manufacturer": device.get("manufacturer", ""),
-                "model": device.get("model", ""),
-                "name": device["name"],
-            }
-            availability = [
-                {"topic": status_topic.decode("utf-8")},
-                {"topic": self._status_topic.decode("utf-8")},
-            ]
-            for sensor_id, components in device["components"].items():
-                for component in components:
-                    self._publish(
-                        f"{self._topic_prefix}/sensor/{device_id}/{sensor_id}-{component}/config".encode(),
-                        {
-                            "state_topic": state_topic.decode("utf-8"),
-                            "value_template": "{{ value_json.%s_%s }}"  # noqa: UP031
-                            % (sensor_id, component),
-                            "state_class": "measurement",
-                            "device": device_discovery,
-                            "availability": availability,
-                            "availability_mode": "all",
-                            "unique_id": f"{self._topic_prefix}-{device_id}-{sensor_id}-{component}",
-                            "name": f"{sensor_id} {component}",
-                            "unit_of_measurement": _UNITS[component],
-                            "device_class": component,
-                            "icon": _ICONS[component],
-                        },
-                        retain=True,
-                        keep_trying=True,
-                        encode=True,
-                    )
-            self._publish(status_topic, b"offline", retain=True)
+    def _send_discovery(self, device_id: str, extra_dev_info: dict[str, str]) -> None:
+        device = self._devices[device_id]
+        self._publish(
+            f"{self._topic_prefix}/device/{device_id}/config".encode(),
+            {
+                "device": {
+                    "ids": f"{self._topic_prefix}-{device_id}",
+                    "name": device["name"],
+                    **extra_dev_info,
+                },
+                "origin": {
+                    "name": "esp-now-hub",
+                    "sw": _VERSION_INFO,
+                    "url": "https://github.com/gpajot/esp-now-hub",
+                },
+                "availability": [
+                    {"topic": self._status_topic.decode("utf-8")},
+                    {"topic": self._get_status_topic(device_id).decode("utf-8")},
+                ],
+                "availability_mode": "all",
+                "state_topic": self._get_state_topic(device_id).decode("utf-8"),
+                "components": {
+                    f"{sensor_id}_{component}": {
+                        "unique_id": f"{self._topic_prefix}-{device_id}-{sensor_id}-{component}",
+                        "platform": "sensor",
+                        "device_class": component,
+                        "state_class": "measurement",
+                        "unit_of_measurement": _UNITS[component],
+                        "value_template": "{{ value_json.%s_%s }}"  # noqa: UP031
+                        % (sensor_id, component),
+                        "name": f"{sensor_id} {component}",
+                        "icon": _ICONS[component],
+                    }
+                    for sensor_id, components in device["components"].items()
+                    for component in components
+                },
+            },
+            retain=True,
+            keep_trying=True,
+            encode=True,
+        )
 
     def send(self, device_id: str, data) -> None:
         if device_id not in self._last_device_seen_times:
             self._debug(f"device {device_id} back online")
             self._publish(self._get_status_topic(device_id), b"online", retain=True)
         self._last_device_seen_times[device_id] = time.time()
+        extra_dev_info = data.pop("d", {})
+        if extra_dev_info != self._discovery_sent.get(device_id):
+            self._send_discovery(device_id, extra_dev_info)
+            self._discovery_sent[device_id] = extra_dev_info
         if data:
             self._publish(self._get_state_topic(device_id), data, encode=True)
 

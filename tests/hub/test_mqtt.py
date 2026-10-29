@@ -1,3 +1,4 @@
+import json
 import select
 from unittest.mock import call
 
@@ -52,8 +53,8 @@ def client(poll, mqtt_client, devices):
 def test_setup(client, poll, mqtt_client, mqtt_socket):
     with client:
         poll.register.assert_called_once_with(mqtt_socket, select.POLLIN)
-        # 2 discovery, 2 dev statuses, 1 hub status
-        assert mqtt_client.publish.call_count == 5
+        # 2 dev statuses, 1 hub status
+        assert mqtt_client.publish.call_count == 3
         mqtt_client.publish.reset_mock()
     poll.unregister.assert_called_once_with(mqtt_socket)
     assert mqtt_client.publish.call_count == 1
@@ -96,14 +97,59 @@ def test_ping_devices(client, mqtt_client, time_mock):
     assert client._last_device_seen_times == {}
 
 
-def test_send(client, mqtt_client, time_mock):
+def test_send(client, mqtt_client, time_mock, mocker):
+    mocker.patch("esp_now_hub.hub.mqtt._VERSION_INFO", new="version")
     time_mock.return_value = 1000
     with client:
         assert client._last_device_seen_times == {}
         mqtt_client.publish.reset_mock()
-        client.send("000000000001", {"some": "data"})
+        client.send("000000000001", {"some": "data", "d": {"extra": "device property"}})
         assert mqtt_client.publish.call_args_list == [
             call(b"topic/status/000000000001", b"online", retain=True),
+            call(
+                b"topic/device/000000000001/config",
+                json.dumps(
+                    {
+                        "device": {
+                            "ids": "topic-000000000001",
+                            "name": "dev1",
+                            "extra": "device property",
+                        },
+                        "origin": {
+                            "name": "esp-now-hub",
+                            "sw": "version",
+                            "url": "https://github.com/gpajot/esp-now-hub",
+                        },
+                        "availability": [
+                            {"topic": "topic/status/hub"},
+                            {"topic": "topic/status/000000000001"},
+                        ],
+                        "availability_mode": "all",
+                        "state_topic": "topic/get/000000000001",
+                        "components": {
+                            "sensor1_pressure": {
+                                "unique_id": "topic-000000000001-sensor1-pressure",
+                                "platform": "sensor",
+                                "device_class": "pressure",
+                                "state_class": "measurement",
+                                "unit_of_measurement": "bar",
+                                "value_template": "{{ value_json.sensor1_pressure }}",
+                                "name": "sensor1 pressure",
+                                "icon": "mdi:speedometer",
+                            }
+                        },
+                    }
+                ).encode(),
+                retain=True,
+            ),
+            call(b"topic/get/000000000001", b'{"some": "data"}', retain=False),
+        ]
+        assert client._last_device_seen_times == {"000000000001": 1000}
+
+        # Send again, should only send the data.
+        mqtt_client.publish.reset_mock()
+        client.send("000000000001", {"some": "data", "d": {"extra": "device property"}})
+        assert mqtt_client.publish.call_args_list == [
             call(b"topic/get/000000000001", b'{"some": "data"}', retain=False),
         ]
         assert client._last_device_seen_times == {"000000000001": 1000}

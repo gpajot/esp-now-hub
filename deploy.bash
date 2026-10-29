@@ -42,5 +42,8 @@ else
   fi
 fi
 mpy-cross -o data/config.mpy config.py
+echo "VERSION = \"$(uv version --short)\"" > data/version.py
+mpy-cross -o data/version.mpy data/version.py
+rm data/version.py
 
 mpremote cp -r data/* :.
