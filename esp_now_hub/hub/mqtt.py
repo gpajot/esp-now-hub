@@ -158,11 +158,13 @@ class MQTTClient:
         self._publish(
             f"{self._topic_prefix}/device/{device_id}/config".encode(),
             {
-                "device": {
-                    "ids": f"{self._topic_prefix}-{device_id}",
-                    "name": device["name"],
-                    **extra_dev_info,
-                },
+                "device": dict(
+                    {
+                        "ids": f"{self._topic_prefix}-{device_id}",
+                        "name": device["name"],
+                    },
+                    **extra_dev_info
+                ),
                 "origin": {
                     "name": "esp-now-hub",
                     "sw": _VERSION_INFO,
@@ -193,7 +195,7 @@ class MQTTClient:
             retain=True,
             keep_trying=True,
             encode=True,
-        )
+        )  # fmt: skip
 
     def send(self, device_id: str, data) -> None:
         if device_id not in self._last_device_seen_times:
