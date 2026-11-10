@@ -14,14 +14,14 @@ license-files = ["LICENSE"]
 
 [dependency-groups]
 dev = [
-    "pytest==9.1.1",
+    "pytest==9.2.0",
     "pytest-mock==3.17.0",
     "ruff==0.17.4",
     "micropython-esp32-esp32_generic-stubs==1.29.0.post1",
     "mpremote==1.29.0",
     "esptool==5.6.0",
     "mpy-cross==1.29.0.post2",
-    "ty==0.0.95",
+    "ty==0.0.99",
 ]
 
 [tool.ruff.lint]

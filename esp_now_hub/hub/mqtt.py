@@ -17,7 +17,7 @@ else:
 try:
     from .version import VERSION
 except ImportError:
-    from version import VERSION  # ty: ignore[unresolved-import]
+    from version import VERSION  # ty: ignore[import-not-found]
 
 _VERSION_INFO = f"{VERSION} ({os.uname().release})"
 
