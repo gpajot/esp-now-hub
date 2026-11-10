@@ -1,10 +1,10 @@
 [project]
-name = "esp_now_hub"
+name = "esp-now-hub"
 version = "1.1.1"
 description = "Firmware for creating a network of devices sending data to MQTT, proxied through ESP-NOW."
 license = "MIT"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.15"
 authors = [
     { name = "Gabriel Pajot", email = "gab@lescactus.eu" }
 ]
@@ -17,7 +17,6 @@ dev = [
     "pytest==9.1.1",
     "pytest-mock==3.17.0",
     "ruff==0.17.3",
-    "pre-commit==4.7.0",
     "micropython-esp32-esp32_generic-stubs==1.29.0.post1",
     "mpremote==1.29.0",
     "esptool==5.6.0",
@@ -41,7 +40,6 @@ unused-ignore-comment = "warn"
 
 [tool.ty.terminal]
 error-on-warning = true
-
 [build-system]
-requires = ["uv_build>=0.12.3,<0.14"]
+requires = ["uv_build>=0.13,<0.14"]
 build-backend = "uv_build"
