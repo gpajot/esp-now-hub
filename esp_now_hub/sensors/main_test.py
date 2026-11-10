@@ -8,10 +8,10 @@ try:
     from .value_cache import process_sensor_data, store_sensor_data
     from .version import VERSION
 except ImportError:
-    from config import CONFIG  # ty: ignore[unresolved-import]
-    from setup import setup_sensors  # ty: ignore[unresolved-import]
-    from value_cache import process_sensor_data, store_sensor_data  # ty: ignore[unresolved-import]
-    from version import VERSION  # ty: ignore[unresolved-import]
+    from config import CONFIG  # ty: ignore[import-not-found]
+    from setup import setup_sensors  # ty: ignore[import-not-found]
+    from value_cache import process_sensor_data, store_sensor_data  # ty: ignore[import-not-found]
+    from version import VERSION  # ty: ignore[import-not-found]
 
 _OS_STATS = os.uname()
 _VERSION_INFO = f"{VERSION} ({_OS_STATS.release}) - {_OS_STATS.sysname}"

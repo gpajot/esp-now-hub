@@ -8,10 +8,10 @@ try:
     from . import esp_now, mqtt, wifi
     from .config import CONFIG
 except ImportError:
-    import esp_now  # ty: ignore[unresolved-import]
-    import mqtt  # ty: ignore[unresolved-import]
-    import wifi  # ty: ignore[unresolved-import]
-    from config import CONFIG  # ty: ignore[unresolved-import]
+    import esp_now  # ty: ignore[import-not-found]
+    import mqtt  # ty: ignore[import-not-found]
+    import wifi  # ty: ignore[import-not-found]
+    from config import CONFIG  # ty: ignore[import-not-found]
 
 _log_to_file = CONFIG.get("debug_to")
 _log_to_stdout = _log_to_file == "stdout"
