@@ -73,7 +73,7 @@ class BMP280:
                     int,
                     buf.replace(b"\x00", b"").decode("utf-8").strip().split(","),
                 )
-            )  # ty: ignore[invalid-return-type]
+            )  # ty: ignore[invalid-explicit-return]
         except OSError:
             pass
         data = self._i2c.readfrom_mem(

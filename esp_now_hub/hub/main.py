@@ -21,7 +21,7 @@ def _debug(source: str, msg: str, exc_info: Exception | None = None) -> None:
     if _log_to_stdout:
         print(time.time(), source, msg)
         if exc_info:
-            sys.print_exception(exc_info)  # ty: ignore[unresolved-attribute]
+            sys.print_exception(exc_info)  # ty: ignore[missing-attribute]
     elif _log_to_file:
         with open(_log_to_file, "a") as f:
             f.write(f"{time.time()} - {source}: {msg}\n")
