@@ -80,7 +80,7 @@ class MS5540C:
                     int,
                     buf.replace(b"\x00", b"").decode("utf-8").strip().split(","),
                 )
-            )  # ty: ignore[invalid-return-type]
+            )  # ty: ignore[invalid-explicit-return]
         except OSError:
             pass
         self._write(_RESET_CMD)

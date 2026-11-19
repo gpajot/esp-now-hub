@@ -48,7 +48,7 @@ class MS5803:
                     int,
                     buf.replace(b"\x00", b"").decode("utf-8").strip().split(","),
                 )
-            )  # ty: ignore[invalid-return-type]
+            )  # ty: ignore[invalid-explicit-return]
         except OSError:
             pass
         coefficients = tuple(
@@ -59,7 +59,7 @@ class MS5803:
         )
         nvs.set_blob(_CALIB_CACHE, ",".join(map(str, coefficients)).encode("utf-8"))
         nvs.commit()
-        return coefficients  # ty: ignore[invalid-return-type]
+        return coefficients  # ty: ignore[invalid-explicit-return]
 
     def _get_calibration_coefficient(self, cmd: bytes) -> int:
         self._i2c.writeto(self._address, cmd)

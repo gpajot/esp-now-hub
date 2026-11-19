@@ -35,6 +35,6 @@ while True:
         run()
     except Exception as exc:
         print("error running sensor:")
-        sys.print_exception(exc)  # ty: ignore[unresolved-attribute]
+        sys.print_exception(exc)  # ty: ignore[missing-attribute]
         # Wait for an interval.
         time.sleep(CONFIG["interval"])
